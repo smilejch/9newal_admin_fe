@@ -1,0 +1,263 @@
+@import "tailwindcss";
+
+/* ==================== 공통 폼 스타일 ==================== */
+/* 폼 섹션 */
+.form-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+/* 섹션 제목 */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* 폼 그리드 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* 폼 그룹 */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 폼 라벨 */
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+/* 폼 입력 필드 */
+.form-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  background-color: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input:hover {
+  border-color: #9ca3af;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ==================== 공통 버튼 스타일 ==================== */
+/* 버튼 기본 스타일 */
+button {
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+/* 버튼 호버 효과 */
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 비활성화된 버튼 */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== 액션 버튼 스타일 ==================== */
+/* 액션 버튼 컨테이너 */
+.action-buttons {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 액션 버튼 */
+.action-buttons button {
+  padding: 6px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.action-buttons button:hover {
+  transform: scale(1.1);
+  background: #f5f5f5;
+}
+
+.action-buttons svg {
+  pointer-events: none;
+}
+
+/* ==================== ag-Grid 공통 스타일 ==================== */
+/* ag-Grid 헤더 가운데 정렬 */
+.ag-header-cell-center .ag-header-cell-label {
+  justify-content: center;
+}
+
+/* ==================== 공통 스크롤바 스타일 ==================== */
+/* 커스텀 스크롤바 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 모달, 폼 등에서 사용할 스크롤바 */
+.modal-content::-webkit-scrollbar,
+.form-container::-webkit-scrollbar,
+.data-grid::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track,
+.form-container::-webkit-scrollbar-track,
+.data-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.form-container::-webkit-scrollbar-thumb,
+.data-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.form-container::-webkit-scrollbar-thumb:hover,
+.data-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ==================== Vue Select 공통 스타일 ==================== */
+/* Vue Select 기본 스타일 */
+.vue-select-custom .vs__dropdown-toggle {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  min-height: 42px;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.vue-select-custom .vs__dropdown-toggle:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.vue-select-custom .vs__search {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+.vue-select-custom .vs__selected {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+.vue-select-custom .vs__dropdown-menu {
+  border: 1px solid #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.vue-select-custom .vs__dropdown-option--highlight {
+  background: #3b82f6;
+  color: white;
+}
+
+.vue-select-custom .vs__clear,
+.vue-select-custom .vs__open-indicator {
+  fill: #6b7280;
+}
+
+/* ==================== 반응형 디자인 ==================== */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-section {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .section-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+}
+
+.form-group-full-width {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  grid-column: 1 / -1; /* 그리드에서 전체 컬럼 차지 */
+}
+
+.page-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 4px;
+    gap: 4px;
+  }
+}
