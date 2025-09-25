@@ -1,13 +1,5 @@
 // src/modules/auth/api/auth.js
-import instance from '@/api/axios';
-import axios from 'axios';
-
-// 로그인 전용 axios 인스턴스 (인터셉터 우회)
-const loginInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
-  timeout: 30000,
-  withCredentials: true,
-});
+import instance, { loginInstance } from '@/api/axios';
 
 // 로그인 API (인터셉터 우회)
 export function login(payload) {
@@ -15,9 +7,9 @@ export function login(payload) {
   return loginInstance.post('/auth/login', payload);
 }
 
-// 토큰 갱신 API
+// 토큰 갱신 API (인터셉터 우회)
 export function refreshToken() {
-  return instance.post('/auth/refresh');
+  return loginInstance.post('/auth/refresh');
 }
 
 // 로그아웃 API

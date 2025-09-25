@@ -57,10 +57,12 @@ instance.interceptors.request.use(
 // 응답 인터셉터: 401 에러 시 자동 토큰 갱신, 로딩 종료
 instance.interceptors.response.use(
   (response) => {
+    console.log('응답 인터셉터 시도 중...');
     globalLoading.hideLoading();
     return response;
   },
   async (error) => {
+    console.log('응답 인터셉터 시도 중...2');
     globalLoading.hideLoading();
     const originalRequest = error.config;
     const currentRoute = window.location.pathname;
@@ -84,12 +86,16 @@ instance.interceptors.response.use(
       
       // 이미 갱신 중인 경우, 큐에 추가하고 대기
       if (isRefreshing) {
+        console.log('토큰 갱신 시도 중...3');
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(token => {
+          console.log('토큰 갱신 시도 중...4');
           originalRequest.headers.Authorization = `Bearer ${token}`;
+          console.log('토큰 갱신 시도 중...5');
           return instance(originalRequest);
         }).catch(err => {
+          console.log('토큰 갱신 시도 중...6');
           return Promise.reject(err);
         });
       }
@@ -100,33 +106,51 @@ instance.interceptors.response.use(
       try {
         console.log('토큰 갱신 시도 중...');
         const refreshResponse = await refreshToken();
+        console.log('토큰 갱신 시도 중...2');
         const newToken = refreshResponse.data.access_token;
 
         // 새 토큰으로 업데이트
         const authStore = useAuthStore();
         authStore.token = newToken;
+        console.log('토큰 업데이트1');
         localStorage.setItem('token', newToken);
+        console.log('토큰 업데이트2');
 
         // 기본 헤더 업데이트
         axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        console.log('기본 헤더 업데이트');
 
         // 대기 중인 요청들에 새 토큰 전달
         processQueue(null, newToken);
+        console.log('기본 헤더 업데이트');
 
         // 원래 요청 재시도
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return instance(originalRequest);
+        console.log('토큰 갱신 성공');
 
-      } catch (refreshError) {
-        console.error('토큰 갱신 실패:', refreshError);
-        
-        // 갱신 실패 시 로그아웃 처리
-        processQueue(refreshError, null);
-        
-        const authStore = useAuthStore();
-        authStore.logout();
-        
-        return Promise.reject(refreshError);
+        } catch (refreshError) {
+          console.error('토큰 갱신 실패:', refreshError);
+          
+          // 갱신 실패 시 로그아웃 처리
+          processQueue(refreshError, null);
+          
+          const authStore = useAuthStore();
+          
+          // 추가적인 정리 작업
+          localStorage.clear(); // 모든 localStorage 데이터 삭제
+          delete axios.defaults.headers.common['Authorization']; // axios 기본 헤더에서 토큰 제거
+          
+          // 스토어 로그아웃 (API 호출 없이 클라이언트만 정리)
+          try {
+            authStore.logout();
+          } catch (logoutError) {
+            console.warn('로그아웃 처리 중 오류:', logoutError);
+            // 로그아웃 실패해도 강제로 로그인 페이지로 이동
+            window.location.href = '/login';
+          }
+          
+          return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
@@ -135,5 +159,12 @@ instance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// 로그인 전용 axios 인스턴스 (인터셉터 우회)
+export const loginInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  timeout: 30000,
+  withCredentials: true,
+});
 
 export default instance;

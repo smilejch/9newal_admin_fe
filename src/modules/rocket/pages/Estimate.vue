@@ -11,5 +11,12 @@
 </template>
 
 <script setup>
+import { refreshTokenTest } from '@/modules/rocket/api/estimate';
+import { onMounted } from 'vue';
+
+onMounted(() => {
+  refreshTokenTest();
+})
+
 // 견적서 페이지
 </script>
