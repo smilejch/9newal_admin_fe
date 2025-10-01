@@ -281,35 +281,41 @@ const colDefs = ref([
     headerName: '사용자ID',
     field: 'user_id',
     width: 80,
-    minWidth: 80
+    minWidth: 80,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '사용자명',
     field: 'user_name',
     width: 100,
-    minWidth: 100
+    minWidth: 100,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '이메일',
     field: 'user_email',
     width: 150,
-    minWidth: 150
+    minWidth: 150,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '연락처',
     field: 'contact',
     width: 100,
-    minWidth: 100
+    minWidth: 100,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '회사명',
     field: 'company_name',
     width: 150,
-    minWidth: 120
+    minWidth: 120,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '사용자상태',
     field: 'user_status_name',
+    headerClass: 'ag-header-cell-center',
     width: 100,
     minWidth: 80
   },
@@ -317,8 +323,8 @@ const colDefs = ref([
   {
     headerName: 'Actions',
     field: 'actions',
-    width: 120,
-    minWidth: 100,
+    width: 80,
+    minWidth: 80,
     sortable: false,
     filter: false,
     headerClass: 'ag-header-cell-center',
