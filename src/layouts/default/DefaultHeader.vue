@@ -1,55 +1,49 @@
 <template>
-  <header class="bg-gray-800 shadow-lg px-4 md:px-6 py-3 flex items-center justify-between w-full z-10">
+  <header class="bg-gray-800 shadow-lg px-3 md:px-4 py-2 flex items-center justify-between w-full z-10">
     <div class="flex items-center gap-4">
       <!-- 햄버거 메뉴 버튼 -->
       <button 
         @click="emit('toggle-sidebar')"
-        class="p-2 hover:bg-gray-700 rounded-lg transition-colors flex items-center cursor-pointer"
+        class="p-1.5 hover:bg-gray-700 rounded-lg transition-colors flex items-center cursor-pointer"
       >
-        <span class="material-icons text-xl text-white">menu</span>
+        <span class="material-icons text-lg text-white">menu</span>
       </button>
       
       <!-- 로고/브랜드명 -->
       <div class="flex items-center">
-        <h1 class="text-xl font-bold leading-none text-white tracking-tight">
+        <h1 class="text-lg font-bold leading-none text-white tracking-tight">
           9NEWALL
         </h1>
-        <span class="ml-2 px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
+        <span class="ml-2 px-1.5 py-0.5 bg-blue-600 text-white text-xs font-medium rounded-full">
           Admin
         </span>
       </div>
     </div>
     
-    <div class="flex items-center gap-4">
-      <!-- 알림 버튼 -->
-      <button class="p-2 hover:bg-gray-700 rounded-lg transition-colors relative">
-        <span class="material-icons text-xl text-gray-300">notifications</span>
-        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-      </button>
-      
+    <div class="flex items-center gap-3">
       <!-- 사용자 아바타 -->
       <div class="relative user-dropdown-container">
         <button
           @click="showUser = !showUser"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           :aria-expanded="showUser ? 'true' : 'false'"
           aria-label="계정 메뉴 열기"
           title="계정 메뉴"
           type="button"
         >
-          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-            <span class="text-white text-sm font-semibold">{{ userInitial }}</span>
+          <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <span class="material-icons text-white text-sm">person</span>
           </div>
           <div class="hidden md:block text-left">
-            <div class="text-sm font-medium text-white">{{ authStore.userName }}</div>
+            <div class="text-xs font-medium text-white">{{ authStore.userName }}</div>
             <div class="text-xs text-gray-300">{{ authStore.userRole }}</div>
           </div>
-          <span class="material-icons text-gray-300 text-base hidden md:inline">expand_more</span>
+          <span class="material-icons text-gray-300 text-sm hidden md:inline">expand_more</span>
         </button>
       </div>
       
       <!-- User Dropdown -->
-      <div v-if="showUser" class="absolute right-4 top-14 md:right-6 md:top-16 w-56 bg-white shadow-lg rounded-xl border border-gray-100 z-10 user-dropdown-container">
+      <div v-if="showUser" class="absolute right-3 top-12 md:right-4 md:top-13 w-56 bg-white shadow-lg rounded-xl border border-gray-100 z-10 user-dropdown-container">
         <div class="p-4 border-b border-gray-100">
           <p class="text-sm font-semibold text-gray-900">{{ authStore.userName }}</p>
           <p class="text-xs text-gray-500">{{ authStore.userEmail }}</p>
@@ -205,10 +199,6 @@ const currentPassword = ref('');
 const newPassword = ref('');
 const newPasswordConfirm = ref('');
 
-// 사용자 이니셜
-const userInitial = computed(() => {
-  return authStore.userName.charAt(0).toUpperCase()
-})
 
 // 비밀번호 검증
 const isPasswordMatch = computed(() => {

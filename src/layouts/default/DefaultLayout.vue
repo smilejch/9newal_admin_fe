@@ -12,7 +12,7 @@
       <div 
         :class="[
           'transition-all duration-300 ease-in-out',
-          sidebarVisible ? 'w-64' : 'w-0',
+          sidebarVisible ? 'w-56' : 'w-0',
           'overflow-hidden'
         ]"
       >
@@ -24,7 +24,7 @@
       
       <!-- Main content -->
       <div class="flex flex-col flex-1 min-w-0">
-        <main class="flex-1 overflow-y-auto p-4 md:p-3">
+        <main class="flex-1 overflow-y-auto p-3 md:p-2">
           <router-view />
         </main>
         <DefaultFooter />

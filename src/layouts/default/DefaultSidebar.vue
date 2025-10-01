@@ -1,8 +1,8 @@
 <template>
   <div 
-    class="bg-gray-800 shadow-lg h-full transition-all duration-300 w-64"
+    class="bg-gray-800 shadow-lg h-full transition-all duration-300 w-56"
   >
-    <div class="p-4 h-full flex flex-col">      
+    <div class="p-3 h-full flex flex-col">      
       <!-- Menu -->
       <div class="flex-1 overflow-y-auto">
         <MenuParents 
