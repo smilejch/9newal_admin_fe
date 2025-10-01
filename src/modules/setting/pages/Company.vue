@@ -224,36 +224,42 @@ const colDefs = ref([
     field: 'company_name',
     width: 200,
     minWidth: 150,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '쿠팡 벤더ID',
     field: 'coupang_vendor_id',
     width: 120,
-    minWidth: 100
+    minWidth: 100,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '사업자번호',
     field: 'business_registration_number',
     width: 120,
-    minWidth: 100
+    minWidth: 100,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '주소',
     field: 'address',
     width: 250,
-    minWidth: 200
+    minWidth: 200,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '상세주소',
     field: 'address_dtl',
     width: 200,
-    minWidth: 150
+    minWidth: 150,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '회사상태',
     field: 'company_status_name',
     width: 100,
-    minWidth: 80
+    minWidth: 80,
+    headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '액션',
