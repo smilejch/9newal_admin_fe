@@ -844,18 +844,17 @@ const colDefs = ref([
       { 
         field: "company_name", 
         headerName: "회사명", 
-        minWidth: 120,
+        minWidth: 80,
         sortable: true,
         filter: false,
         headerClass: 'ag-header-cell-center',
-        pinned: 'left',
         cellClass: 'text-left',
         suppressSizeToFit: true
       },
       { 
         field: "sku_id", 
         headerName: "SKU ID", 
-        minWidth: 80,
+        minWidth: 50,
         sortable: true,
         filter: false,
         headerClass: 'ag-header-cell-center',
@@ -866,7 +865,7 @@ const colDefs = ref([
       { 
         field: "bundle", 
         headerName: "묶음", 
-        width: 100,
+        width: 80,
         sortable: true,
         filter: false,
         pinned: 'left',
@@ -876,7 +875,7 @@ const colDefs = ref([
       { 
         field: "sku_name", 
         headerName: "상품명", 
-        width: 200,
+        width: 150,
         minWidth: 100,
         sortable: true,
         filter: false,
