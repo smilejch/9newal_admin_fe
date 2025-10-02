@@ -150,7 +150,6 @@ const fetchAllOptions = async () => {
     platformTypeOptions.value = responsePlatformType.data
   } catch (error) {
     console.error('옵션 데이터 로드 실패:', error)
-    showError('데이터 로드 실패', '옵션 데이터를 불러오는 중 오류가 발생했습니다.')
   }
 }
 
@@ -206,7 +205,6 @@ const loadCompanyData = async () => {
     })
   } catch (error) {
     console.error('회사 데이터 로드 실패:', error)
-    showError('데이터 로드 실패', '회사 정보를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -289,7 +287,6 @@ const handleDelete = async () => {
     handleClose()
   } catch (error) {
     console.error('회사 삭제 실패:', error)
-    showError('삭제 실패', '회사 삭제 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }

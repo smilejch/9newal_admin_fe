@@ -429,7 +429,6 @@ const deleteItem = async (companyNo) => {
     }
   } catch (error) {
     console.error('회사 삭제 실패:', error)
-    showError('삭제 실패', '회사 삭제 중 오류가 발생했습니다.')
   }
 }
 

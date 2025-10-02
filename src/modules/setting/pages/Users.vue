@@ -498,7 +498,6 @@ const deleteItem = async (userId) => {
     }
   } catch (error) {
     console.error('사용자 삭제 실패:', error)
-    showError('삭제 실패', '사용자 삭제 중 오류가 발생했습니다.')
   }
 }
 
@@ -512,7 +511,6 @@ const approveItem = async (userId) => {
     }
   } catch (error) {
     console.error('사용자 승인 실패:', error)
-    showError('승인 실패', '사용자 승인 중 오류가 발생했습니다.')
   }
 }
 
@@ -639,7 +637,6 @@ const loadCompanyOptions = async () => {
     companyOptions.value = response.data || []
   } catch (error) {
     console.error('회사 목록 로드 실패:', error)
-    showError('데이터 로드 실패', '회사 목록을 불러오는 중 오류가 발생했습니다.')
   }
 }
 

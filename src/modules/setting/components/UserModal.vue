@@ -207,7 +207,6 @@ const fetchAllOptions = async () => {
     companyOptions.value = responseCompanies.data || []
   } catch (error) {
     console.error('옵션 데이터 로드 실패:', error)
-    showError('데이터 로드 실패', '옵션 데이터를 불러오는 중 오류가 발생했습니다.')
   }
 }
 
@@ -264,7 +263,6 @@ const loadUserData = async () => {
     })
   } catch (error) {
     console.error('사용자 데이터 로드 실패:', error)
-    showError('데이터 로드 실패', '사용자 정보를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -393,7 +391,6 @@ const handleSave = async () => {
     handleClose()
   } catch (error) {
     console.error('사용자 저장 실패:', error)
-    showError('저장 실패', '사용자 저장 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -411,7 +408,6 @@ const handleDelete = async () => {
     handleClose()
   } catch (error) {
     console.error('사용자 삭제 실패:', error)
-    showError('삭제 실패', '사용자 삭제 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
