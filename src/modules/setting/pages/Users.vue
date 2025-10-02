@@ -76,7 +76,8 @@
             @keyup.enter="searchDataByFilters"
           />
         </div>
-
+        <!--
+        사용자명, 이메일은 암호화 되어 있어 데이터 전체를 복호화 한 후 필터를 해야하여 우선 필터에서 제외
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">사용자명</label>
           <input
@@ -98,6 +99,7 @@
             @keyup.enter="searchDataByFilters"
           />
         </div>
+      -->
       </template>
 
       <!-- 액션 버튼들 -->
@@ -184,7 +186,7 @@ import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import CommonButtons from '@/components/CommonButtons.vue'
 import UserModal from '@/modules/setting/components/UserModal.vue'
-import { deleteUser, fetchUserList } from '@/modules/setting/api/user'
+import { deleteUser, fetchUserList, approveUser } from '@/modules/setting/api/user'
 import { showError, showSuccess, showInfo, confirmDelete, showConfirm } from '@/utils/alert'
 import { fetchCompanyList } from '@/modules/common/api/common'
 
@@ -282,6 +284,7 @@ const colDefs = ref([
     field: 'user_id',
     width: 80,
     minWidth: 80,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -289,6 +292,7 @@ const colDefs = ref([
     field: 'user_name',
     width: 100,
     minWidth: 100,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -296,6 +300,7 @@ const colDefs = ref([
     field: 'user_email',
     width: 150,
     minWidth: 150,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -303,6 +308,7 @@ const colDefs = ref([
     field: 'contact',
     width: 100,
     minWidth: 100,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -310,11 +316,13 @@ const colDefs = ref([
     field: 'company_name',
     width: 150,
     minWidth: 120,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
     headerName: '사용자상태',
     field: 'user_status_name',
+    filter: false,
     headerClass: 'ag-header-cell-center',
     width: 100,
     minWidth: 80
@@ -332,25 +340,53 @@ const colDefs = ref([
     cellRenderer: (params) => {
       const container = document.createElement('div')
       container.className = 'action-buttons flex space-x-1 justify-center'
-            
-      // 편집 버튼 (연필 아이콘)
-      const editBtn = document.createElement('button')
-      editBtn.className = 'px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center'
-      editBtn.innerHTML = `
-        <span class="material-icons" style="font-size: 16px">edit</span>
-      `
-      editBtn.addEventListener('click', () => editItem(params.data.user_no))
       
-      // 삭제 버튼 (쓰레기통 아이콘)
-      const deleteBtn = document.createElement('button')
-      deleteBtn.className = 'px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 flex items-center justify-center'
-      deleteBtn.innerHTML = `
-        <span class="material-icons" style="font-size: 16px">delete</span>
-      `
-      deleteBtn.addEventListener('click', () => deleteItem(params.data.user_no))
-      
-      container.appendChild(editBtn)
-      container.appendChild(deleteBtn)
+      // approval_yn이 0이면 승인 버튼 표시
+      if (params.data.approval_yn === 0) {
+        const approveBtn = document.createElement('button')
+        approveBtn.style.cssText = `
+          padding: 8px 16px;
+          background-color: #10b981;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 60px;
+        `
+        approveBtn.innerHTML = '승인'
+        approveBtn.addEventListener('click', () => approveItem(params.data.user_no))
+        approveBtn.addEventListener('mouseenter', () => {
+          approveBtn.style.backgroundColor = '#059669'
+        })
+        approveBtn.addEventListener('mouseleave', () => {
+          approveBtn.style.backgroundColor = '#10b981'
+        })
+        container.appendChild(approveBtn)
+      } else {
+        // 편집 버튼 (연필 아이콘)
+        const editBtn = document.createElement('button')
+        editBtn.className = 'px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center'
+        editBtn.innerHTML = `
+          <span class="material-icons" style="font-size: 16px">edit</span>
+        `
+        editBtn.addEventListener('click', () => editItem(params.data.user_no))
+        
+        // 삭제 버튼 (쓰레기통 아이콘)
+        const deleteBtn = document.createElement('button')
+        deleteBtn.className = 'px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 flex items-center justify-center'
+        deleteBtn.innerHTML = `
+          <span class="material-icons" style="font-size: 16px">delete</span>
+        `
+        deleteBtn.addEventListener('click', () => deleteItem(params.data.user_no))
+        
+        container.appendChild(editBtn)
+        container.appendChild(deleteBtn)
+      }
       
       return container
     }
@@ -463,6 +499,20 @@ const deleteItem = async (userId) => {
   } catch (error) {
     console.error('사용자 삭제 실패:', error)
     showError('삭제 실패', '사용자 삭제 중 오류가 발생했습니다.')
+  }
+}
+
+const approveItem = async (userId) => {
+  try {
+    const confirmed = await showConfirm('사용자 승인', '이 사용자를 승인하시겠습니까?')
+    if (confirmed) {
+      await approveUser(userId)
+      showSuccess('승인 완료', '사용자가 성공적으로 승인되었습니다.')
+      searchData()
+    }
+  } catch (error) {
+    console.error('사용자 승인 실패:', error)
+    showError('승인 실패', '사용자 승인 중 오류가 발생했습니다.')
   }
 }
 

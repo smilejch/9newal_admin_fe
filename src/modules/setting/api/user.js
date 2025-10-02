@@ -32,3 +32,9 @@ export async function fetchUser(userNo) {
   const response = await instance.get(`/setting/users/${userNo}`);
   return response.data;
 }
+
+// 사용자 승인
+export async function approveUser(userNo) {
+  const response = await instance.put(`/setting/users/${userNo}/approve`);
+  return response.data;
+}

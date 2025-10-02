@@ -224,6 +224,7 @@ const colDefs = ref([
     field: 'company_name',
     width: 200,
     minWidth: 150,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -231,6 +232,7 @@ const colDefs = ref([
     field: 'coupang_vendor_id',
     width: 120,
     minWidth: 100,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -238,6 +240,7 @@ const colDefs = ref([
     field: 'business_registration_number',
     width: 120,
     minWidth: 100,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -245,6 +248,7 @@ const colDefs = ref([
     field: 'address',
     width: 250,
     minWidth: 200,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -252,6 +256,7 @@ const colDefs = ref([
     field: 'address_dtl',
     width: 200,
     minWidth: 150,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
@@ -259,6 +264,7 @@ const colDefs = ref([
     field: 'company_status_name',
     width: 100,
     minWidth: 80,
+    filter: false,
     headerClass: 'ag-header-cell-center',
   },
   {
