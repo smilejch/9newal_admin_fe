@@ -3,7 +3,7 @@
     :isOpen="isOpen"
     :title="modalTitle"
     :size="modalSize"
-    :showSave="modalMode !== 'view'"
+    :showSave="true"
     :showDelete="modalMode === 'edit'"
     @close="handleClose"
     @save="handleSave"
@@ -19,8 +19,6 @@
               v-model="companyData.company_name"
               type="text"
               class="form-input"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isFormReadonly }"
-              :readonly="isFormReadonly"
               placeholder="회사명을 입력하세요"
             />
           </div>
@@ -32,8 +30,6 @@
               v-model="companyData.coupang_vendor_id"
               type="text"
               class="form-input"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isFormReadonly }"
-              :readonly="isFormReadonly"
               placeholder="쿠팡 벤더ID를 입력하세요"
             />
           </div>
@@ -45,8 +41,6 @@
               v-model="companyData.business_registration_number"
               type="text"
               class="form-input"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isFormReadonly }"
-              :readonly="isFormReadonly"
               placeholder="사업자번호를 입력하세요"
             />
           </div>
@@ -58,8 +52,6 @@
               v-model="companyData.address"
               type="text"
               class="form-input"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isFormReadonly }"
-              :readonly="isFormReadonly"
               placeholder="주소를 입력하세요"
             />
           </div>
@@ -71,10 +63,24 @@
               v-model="companyData.address_dtl"
               type="text"
               class="form-input"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isFormReadonly }"
-              :readonly="isFormReadonly"
               placeholder="상세주소를 입력하세요"
             />
+          </div>
+          <!-- 플랫폼 타입 -->
+          <div class="form-group">
+            <label class="form-label">플랫폼 타입</label>
+            <select
+              v-model="companyData.platform_type_cd"
+              class="form-input"
+            >
+              <option 
+                v-for="option in platformTypeOptions" 
+                :key="option.com_code" 
+                :value="option.com_code"
+              >
+                {{ option.code_name }}
+              </option>
+            </select>
           </div>
 
           <!-- 회사 상태 -->
@@ -83,8 +89,6 @@
             <select
               v-model="companyData.company_status_cd"
               class="form-input"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isFormReadonly }"
-              :disabled="isFormReadonly"
             >
               <option value="">회사 상태를 선택하세요</option>
               <option 
@@ -129,6 +133,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved', 'deleted'])
 
 const companyStatusOptions = ref([])
+const platformTypeOptions = ref([])
 
 // 상태
 const loading = ref(false)
@@ -137,8 +142,12 @@ const modalSize = ref('big')
 
 const fetchAllOptions = async () => {
   try {
-    const responseCompanyStatus = await commonCodeList('COMPANY_STATUS_CD')
+    const [responseCompanyStatus, responsePlatformType] = await Promise.all([
+      commonCodeList('COMPANY_STATUS_CD'),
+      commonCodeList('PLATFORM_TYPE_CD')
+    ])
     companyStatusOptions.value = responseCompanyStatus.data
+    platformTypeOptions.value = responsePlatformType.data
   } catch (error) {
     console.error('옵션 데이터 로드 실패:', error)
     showError('데이터 로드 실패', '옵션 데이터를 불러오는 중 오류가 발생했습니다.')
@@ -157,10 +166,10 @@ const companyData = reactive({
   business_registration_number: '',
   address: '',
   address_dtl: '',
+  platform_type_cd: '',
   company_status_cd: ''
 })
 
-const isFormReadonly = computed(() => modalMode.value === 'view')
 
 const modalTitle = computed(() => {
   switch (modalMode.value) {
@@ -168,8 +177,6 @@ const modalTitle = computed(() => {
       return '회사 등록'
     case 'edit':
       return '회사 수정'
-    case 'view':
-      return '회사 정보'
     default:
       return '회사'
   }
@@ -179,6 +186,10 @@ const modalTitle = computed(() => {
 const loadCompanyData = async () => {
   if (!props.companyNo || modalMode.value === 'register') {
     resetCompanyData()
+    // 등록 모드에서는 플랫폼 타입 첫 번째 옵션을 기본값으로 설정
+    if (modalMode.value === 'register' && platformTypeOptions.value.length > 0) {
+      companyData.platform_type_cd = platformTypeOptions.value[0].com_code
+    }
     return
   }
 
@@ -261,7 +272,6 @@ const handleSave = async () => {
     handleClose()
   } catch (error) {
     console.error('회사 저장 실패:', error)
-    showError('저장 실패', '회사 저장 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
@@ -301,61 +311,3 @@ watch(() => props.mode, (newVal) => {
   }
 })
 </script>
-
-<style scoped>
-.company-form {
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group-full-width {
-  display: flex;
-  flex-direction: column;
-  grid-column: 1 / -1;
-}
-
-.form-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 4px;
-}
-
-.form-input {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-input:disabled,
-.form-input:read-only {
-  background-color: #f3f4f6;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

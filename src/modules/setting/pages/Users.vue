@@ -656,9 +656,3 @@ onUnmounted(() => {
   document.removeEventListener('click', handleCompanyClickOutside)
 })
 </script>
-
-<style scoped>
-.page-container {
-  padding: 12px;
-}
-</style>

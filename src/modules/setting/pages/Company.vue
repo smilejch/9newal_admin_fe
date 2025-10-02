@@ -228,6 +228,15 @@ const colDefs = ref([
     headerClass: 'ag-header-cell-center',
   },
   {
+    headerName: '플랫폼',
+    field: 'platform_type_name',
+    width: 80,
+    minWidth: 80,
+    filter: false,
+    headerClass: 'ag-header-cell-center',
+    cellClass: 'text-center',
+  },
+  {
     headerName: '쿠팡 벤더ID',
     field: 'coupang_vendor_id',
     width: 120,
@@ -266,6 +275,7 @@ const colDefs = ref([
     minWidth: 80,
     filter: false,
     headerClass: 'ag-header-cell-center',
+    cellClass: 'text-center',
   },
   {
     headerName: '액션',
@@ -481,9 +491,3 @@ onMounted(() => {
   searchData()
 })
 </script>
-
-<style scoped>
-.page-container {
-  padding: 12px;
-}
-</style>
