@@ -279,6 +279,14 @@ const paginatedData = computed(() => {
 
 // ag-Grid 컬럼 정의
 const colDefs = ref([
+{
+    headerName: '회사명',
+    field: 'company_name',
+    width: 150,
+    minWidth: 120,
+    filter: false,
+    headerClass: 'ag-header-cell-center',
+  },
   {
     headerName: '사용자ID',
     field: 'user_id',
@@ -308,14 +316,6 @@ const colDefs = ref([
     field: 'contact',
     width: 100,
     minWidth: 100,
-    filter: false,
-    headerClass: 'ag-header-cell-center',
-  },
-  {
-    headerName: '회사명',
-    field: 'company_name',
-    width: 150,
-    minWidth: 120,
     filter: false,
     headerClass: 'ag-header-cell-center',
   },

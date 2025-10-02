@@ -849,6 +849,7 @@ const colDefs = ref([
         filter: false,
         headerClass: 'ag-header-cell-center',
         cellClass: 'text-left',
+        pinned: 'left',
         suppressSizeToFit: true
       },
       { 

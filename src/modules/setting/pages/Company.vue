@@ -16,11 +16,11 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">쿠팡 벤더ID</label>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Vendor ID</label>
           <input
             v-model="filters.coupang_vendor_id"
             type="text"
-            placeholder="쿠팡 벤더ID 검색"
+            placeholder="Vendor ID 검색"
             class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
             @keyup.enter="searchDataByFilters"
           />
@@ -237,7 +237,7 @@ const colDefs = ref([
     cellClass: 'text-center',
   },
   {
-    headerName: '쿠팡 벤더ID',
+    headerName: 'Vendor ID',
     field: 'coupang_vendor_id',
     width: 120,
     minWidth: 100,
