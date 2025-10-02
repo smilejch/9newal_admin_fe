@@ -102,13 +102,13 @@
       -->
       </template>
 
-      <!-- 액션 버튼들 -->
-      <template #actions>
+      <!-- 커스텀 버튼 추가 -->
+      <template #buttons>
         <button
-          @click="searchDataByFilters"
-          class="bg-blue-500 text-white px-3 py-1 text-xs rounded hover:bg-blue-600 transition-colors cursor-pointer"
+          @click="searchData"
+          class="bg-blue-600 text-white px-3 py-1 text-xs rounded hover:bg-blue-700 transition-colors cursor-pointer"
         >
-          검색
+          조회
         </button>
         <button
           @click="resetFilters"
