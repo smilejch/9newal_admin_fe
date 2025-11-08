@@ -104,11 +104,11 @@
     </div>
     
     <!-- TODO: 상세 조회 모달 컴포넌트 추가 필요 -->
-    <!-- <PurchaseOrderDtlModal
+    <PurchaseOrderDtlModal
       :isOpen="isDtlModalOpen"
       :orderMstNo="selectedOrderMstNo"
       @close="closeDtlModal"
-    /> -->
+    />
 
   </div>
 </template>
@@ -123,6 +123,7 @@ import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import { fetchOrderMstList } from '@/modules/purchase/api/purchase'
 import { commonCodeList } from '@/modules/common/api/common'
+import PurchaseOrderDtlModal from '@/modules/purchase/components/PurchaseOrderDtlModal.vue'
 
 // 반응형 데이터
 const loading = ref(false)
@@ -175,8 +176,7 @@ const openDtlModal = (orderMstNo) => {
 }
 
 const dtlEditItem = (orderMstNo) => {
-  alert("상세 조회 모달 개발 진행중")
-  // openDtlModal(orderMstNo)
+  openDtlModal(orderMstNo)
 }
 
 const closeDtlModal = () => {

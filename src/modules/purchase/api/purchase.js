@@ -65,3 +65,41 @@ export async function deleteOrderDtlBatch(orderDtlNos) {
   })
   return response.data
 }
+
+/**
+ * 센터 목록 조회 (발주서별)
+ */
+export async function fetchShipmentList(orderMstNo) {
+  const response = await instance.get(`/purchase/orders/${orderMstNo}/shipments`);
+  return response.data;
+}
+
+/**
+ * 센터별 발주 구매 정보 조회 (shipmentDtl) - estimated_yn이 0일 때
+ */
+export async function fetchShipmentDtl(queryParams, shipmentMstNo) {
+  const response = await instance.get(`/purchase/shipments/${shipmentMstNo}/purchase`, {
+    params: queryParams
+  });
+  return response.data;
+}
+
+/**
+ * 센터별 견적 상품 정보 조회 (shipmentEstimateProduct) - estimated_yn이 1일 때
+ */
+export async function fetchShipmentEstimateProduct(queryParams, shipmentMstNo) {
+  const response = await instance.get(`/purchase/shipments/${shipmentMstNo}/estimate-products`, {
+    params: queryParams
+  });
+  return response.data;
+}
+
+/**
+ * 발주 구매 정보 조회 (전체센터) - orderMstNo로 전체 발주 구매 정보 조회
+ */
+export async function fetchPurchaseList(queryParams, orderMstNo) {
+  const response = await instance.get(`/purchase/orders/${orderMstNo}/purchase`, {
+    params: queryParams
+  });
+  return response.data;
+}
