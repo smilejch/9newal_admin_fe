@@ -103,3 +103,13 @@ export async function fetchPurchaseList(queryParams, orderMstNo) {
   });
   return response.data;
 }
+
+/**
+ * 구매 탭용 견적 상품 정보 전체 조회 - orderMstNo로 estimated_yn이 1인 모든 데이터 조회
+ */
+export async function fetchEstimateProductsAll(queryParams, orderMstNo) {
+  const response = await instance.get(`/purchase/shipments/${orderMstNo}/estimate-products-all`, {
+    params: queryParams
+  });
+  return response.data;
+}
