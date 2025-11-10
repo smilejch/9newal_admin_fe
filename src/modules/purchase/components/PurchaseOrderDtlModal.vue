@@ -61,7 +61,7 @@
                                     <template #header-buttons>
                                         <div class="flex items-center gap-3">
                                             <!-- 스위치 (구매 탭일 때만 표시) -->
-                                            <div v-if="currentTabIndex === 1" class="flex items-center gap-2">
+                                            <div v-if="currentTabIndex === 2" class="flex items-center gap-2">
                                                 <label class="text-xs text-gray-700">동일 판매자 선택</label>
                                                 <button
                                                     @click="toggleAutoSelect"
@@ -90,7 +90,7 @@
                                         <ag-grid-vue
                                             ref="agGridRef"
                                             :key="`ag-grid-${currentTabIndex}-${dataList.length}`"
-                                            class="ag-theme-alpine"
+                                            class="ag-theme-alpine purchase-order-grid"
                                             theme="legacy"
                                             :rowData="dataList"
                                             :columnDefs="colDefs"
@@ -98,7 +98,9 @@
                                             :suppressPaginationPanel="true"
                                             :defaultColDef="defaultColDef"
                                             :getRowStyle="getRowStyle"
+                                            :getRowClass="getRowClass"
                                             :rowSelection="rowSelection"
+                                            :isRowSelectable="isRowSelectable"
                                             @grid-ready="onGridReady"
                                             @row-clicked="onRowClicked"
                                             @selection-changed="onSelectionChanged"
@@ -124,6 +126,13 @@
       </div>
     </template>
   </CommonModal>
+  
+  <!-- 견적서 모달 -->
+  <EstimateModal
+    :isOpen="isEstimateModalOpen"
+    :orderShipmentEstimateNo="selectedOrderShipmentEstimateNo"
+    @close="closeEstimateModal"
+  />
 </template>
 
 <script setup>
@@ -135,7 +144,8 @@ import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import CommonButtons from '@/components/CommonButtons.vue'
 import { showError, showSuccess, showInfo } from '@/utils/alert'
-import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll } from '@/modules/purchase/api/purchase'
+import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail } from '@/modules/purchase/api/purchase'
+import EstimateModal from './EstimateModal.vue'
 
 const props = defineProps({
   isOpen: {
@@ -165,10 +175,13 @@ const previousSelectedRowIds = ref(new Set())
 const isProcessingSelection = ref(false)
 // 연동 선택 스위치 상태 (켜져있으면 같은 linked_open_uid를 가진 row들도 함께 선택/해제)
 const isAutoSelectEnabled = ref(true)
+// 견적서 모달 상태
+const isEstimateModalOpen = ref(false)
+const selectedOrderShipmentEstimateNo = ref(null)
 
 // 행 선택 설정 (구매 탭에서만 활성화)
 const rowSelection = computed(() => {
-  if (currentTabIndex.value === 1) {
+  if (currentTabIndex.value === 2) {
     return {
       mode: 'multiRow',
       checkboxes: true,
@@ -184,11 +197,15 @@ const currentPage = ref(1)
 const pageSize = ref(50)
 const totalItems = ref(0)
 
-// 기본 탭 정의 (전체센터 탭, 구매 탭)
+// 기본 탭 정의 (전체센터 탭, 견적 탭, 구매 탭)
 const defaultTabs = [
   {
     id: 'all_centers',
     label: '전체센터'
+  },
+  {
+    id: 'estimate',
+    label: '견적'
   },
   {
     id: 'purchase',
@@ -200,14 +217,14 @@ const tabs = ref([...defaultTabs])
 
 // 현재 선택된 탭의 shipmentMstNo 가져오기
 const currentShipmentMstNo = computed(() => {
-  if (!tabs.value || currentTabIndex.value < 2) return null
+  if (!tabs.value || currentTabIndex.value < 3) return null
   const currentTab = tabs.value[currentTabIndex.value]
   return currentTab?.order_shipment_mst_no || null
 })
 
 // 현재 선택된 탭의 estimated_yn 가져오기
 const currentEstimatedYn = computed(() => {
-  if (!tabs.value || currentTabIndex.value < 2) return null
+  if (!tabs.value || currentTabIndex.value < 3) return null
   const currentTab = tabs.value[currentTabIndex.value]
   return currentTab?.estimated_yn ?? null
 })
@@ -251,6 +268,9 @@ const loadTabData = async () => {
       // 전체 발주 구매 정보 조회
       response = await fetchPurchaseList(queryParams, props.orderMstNo)
     } else if (currentTabIndex.value === 1) {
+      // 견적 탭인 경우: 견적 목록 조회
+      response = await fetchEstimateList(queryParams, props.orderMstNo)
+    } else if (currentTabIndex.value === 2) {
       // 구매 탭인 경우: estimate-products-all API 호출
       response = await fetchEstimateProductsAll(queryParams, props.orderMstNo)
     } else {
@@ -287,7 +307,7 @@ const loadTabData = async () => {
     }
 
     // 구매 탭인 경우 데이터 로드 후 선택 상태 초기화
-    if (currentTabIndex.value === 1 && agGrid.value) {
+    if (currentTabIndex.value === 2 && agGrid.value) {
       await nextTick()
       // 그리드가 파괴되지 않았는지 확인
       if (agGrid.value && !agGrid.value.isDestroyed && typeof agGrid.value.getSelectedRows === 'function') {
@@ -339,6 +359,30 @@ const handleClose = () => {
   emit('close')
 }
 
+// 견적서 모달 열기
+const openEstimateModal = (orderShipmentEstimateNo) => {
+  selectedOrderShipmentEstimateNo.value = orderShipmentEstimateNo
+  isEstimateModalOpen.value = true
+}
+
+// 견적서 모달 닫기
+const closeEstimateModal = () => {
+  isEstimateModalOpen.value = false
+  selectedOrderShipmentEstimateNo.value = null
+}
+
+// 전역 함수로 등록 (ag-grid cellRenderer에서 사용)
+// 모달이 열릴 때 등록하고 닫힐 때 제거
+watch(() => props.isOpen, (newVal) => {
+  if (typeof window !== 'undefined') {
+    if (newVal) {
+      window.openEstimateModal = openEstimateModal
+    } else {
+      delete window.openEstimateModal
+    }
+  }
+})
+
 // ag-Grid 기본 컬럼 설정
 const defaultColDef = ref({
   sortable: true,
@@ -351,6 +395,64 @@ const defaultColDef = ref({
 
 // ag-Grid 컬럼 정의
 const colDefs = computed(() => {
+  // 견적 탭인 경우 견적 목록용 컬럼 정의
+  if (currentTabIndex.value === 1) {
+    return [
+      {
+        field: "estimate_id",
+        headerName: "견적서 ID",
+        headerClass: 'ag-header-cell-center',
+        cellClass: 'text-center',
+        minWidth: 150,
+      },
+      {
+        field: "estimate_date",
+        headerName: "견적일자",
+        headerClass: 'ag-header-cell-center',
+        cellClass: 'text-center',
+        minWidth: 120,
+      },
+      {
+        field: "estimate_total_amount",
+        headerName: "견적 총액",
+        headerClass: 'ag-header-cell-center',
+        cellClass: 'text-right',
+        minWidth: 120,
+        valueFormatter: (params) => {
+          if (params.value == null) return ''
+          return new Intl.NumberFormat('ko-KR', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+          }).format(params.value)
+        }
+      },
+      {
+        field: "actions",
+        headerName: "액션",
+        headerClass: 'ag-header-cell-center',
+        cellClass: 'text-center',
+        minWidth: 100,
+        sortable: false,
+        filter: false,
+        cellRenderer: (params) => {
+          const orderShipmentEstimateNo = params.data?.order_shipment_estimate_no
+          if (!orderShipmentEstimateNo) return ''
+          return `
+            <button 
+              class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+              onclick="if(window.openEstimateModal) window.openEstimateModal('${orderShipmentEstimateNo}')"
+              title="견적서 보기"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+          `
+        }
+      }
+    ]
+  }
+
   const baseColDefs = [
     { 
       field: "order_number", 
@@ -369,7 +471,7 @@ const colDefs = computed(() => {
   ]
 
   // 전체센터 탭과 구매 탭에서만 확정상태 컬럼 표시
-  if (currentTabIndex.value === 0 || currentTabIndex.value === 1) {
+  if (currentTabIndex.value === 0 || currentTabIndex.value === 2) {
     baseColDefs.push({
       field: "order_shipment_mst_status_name", 
       headerName: "상태", 
@@ -452,7 +554,7 @@ const colDefs = computed(() => {
   ]
 
   // 구매 탭 또는 estimated_yn이 1인 센터 탭에만 금액 관련 컬럼 추가
-  if (currentTabIndex.value === 1 || (currentTabIndex.value > 1 && currentEstimatedYn.value === 1)) {
+  if (currentTabIndex.value === 2 || (currentTabIndex.value > 2 && currentEstimatedYn.value === 1)) {
     commonColDefs.push(
       { 
         field: "product_unit_price", 
@@ -526,8 +628,8 @@ const onRowClicked = async (params) => {
   // 전체센터 탭이 아니면 동작하지 않음
   if (currentTabIndex.value !== 0) return
   
-  // 구매 탭에서는 클릭 동작 없음
-  if (currentTabIndex.value === 1) return
+  // 견적 탭과 구매 탭에서는 클릭 동작 없음
+  if (currentTabIndex.value === 1 || currentTabIndex.value === 2) return
   
   // 클릭된 row의 센터 정보 확인
   const clickedRow = params.data
@@ -564,7 +666,7 @@ const onSelectionChanged = async (params) => {
   }
   
   // 구매 탭이 아니면 동작하지 않음
-  if (currentTabIndex.value !== 1) {
+  if (currentTabIndex.value !== 2) {
     previousSelectedLinkedOpenUids.value = new Set()
     previousSelectedRowIds.value = new Set()
     return
@@ -761,6 +863,26 @@ const getRowStyle = (params) => {
   return Object.keys(style).length > 0 ? style : null
 }
 
+// 행 클래스 설정 (구매 탭에서 PAYMENT_COMPLETED가 아닌 row에 disabled 클래스 추가)
+const getRowClass = (params) => {
+  // 구매 탭이고 PAYMENT_COMPLETED가 아닌 경우 disabled 클래스 추가
+  if (currentTabIndex.value === 2 && params.data?.order_shipment_mst_status_cd !== 'PAYMENT_COMPLETED') {
+    return 'row-checkbox-disabled'
+  }
+  return null
+}
+
+// 행 선택 가능 여부 설정 (구매 탭에서만 PAYMENT_COMPLETED 상태인 row만 선택 가능)
+const isRowSelectable = (params) => {
+  // 구매 탭이 아니면 모든 row 선택 가능
+  if (currentTabIndex.value !== 2) {
+    return true
+  }
+  
+  // 구매 탭인 경우 PAYMENT_COMPLETED 상태인 row만 선택 가능
+  return params.data?.order_shipment_mst_status_cd === 'PAYMENT_COMPLETED'
+}
+
 // 드롭다운 버튼을 현재 탭 상태에 따라 동적으로 생성
 const dropdownButtons = computed(() => {
   const baseButtons = []
@@ -777,15 +899,20 @@ const dropdownButtons = computed(() => {
     }
   }
   
-  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 엑셀 다운로드
+  // 견적 탭: 엑셀 다운로드
   if (currentTabIndex.value === 1) {
+    dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
+  }
+  
+  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 엑셀 다운로드
+  if (currentTabIndex.value === 2) {
     dataManagementButtons.push({ label: '선택 아이템 구매', value: 'purchaseSelectedItems' })
     dataManagementButtons.push({ label: 'CJ 운송장 발급', value: 'issueCjTrackingNumber' })
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
   // estimated_yn이 0인 센터 탭: 엑셀 다운로드만
-  if (currentTabIndex.value > 1 && currentEstimatedYn.value === 0) {
+  if (currentTabIndex.value > 2 && currentEstimatedYn.value === 0) {
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
@@ -838,7 +965,7 @@ const handleExcelDownload = async () => {
 const handlePurchaseSelectedItems = async () => {
   try {
     // 구매 탭에서만 동작
-    if (currentTabIndex.value !== 1) {
+    if (currentTabIndex.value !== 2) {
       showError('탭 오류', '구매 탭에서만 사용할 수 있습니다.')
       return
     }
@@ -898,8 +1025,8 @@ const handleTabChange = (index) => {
   currentTabIndex.value = index
   // 페이지네이션 초기화
   currentPage.value = 1
-  // 구매 탭(index === 1)이면 pageSize를 10000으로, 아니면 50으로 설정
-  pageSize.value = index === 1 ? 10000 : 50
+  // 구매 탭(index === 2)이면 pageSize를 10000으로, 아니면 50으로 설정
+  pageSize.value = index === 2 ? 10000 : 50
   // 이전 선택 상태 초기화
   previousSelectedLinkedOpenUids.value = new Set()
   previousSelectedRowIds.value = new Set()
@@ -924,8 +1051,8 @@ watch(() => props.isOpen, async (newVal) => {
 
 // 탭 변경 시 pageSize 자동 조정
 watch(() => currentTabIndex.value, (newIndex) => {
-  // 구매 탭(index === 1)이면 pageSize를 10000으로, 아니면 50으로 설정
-  if (newIndex === 1) {
+  // 구매 탭(index === 2)이면 pageSize를 10000으로, 아니면 50으로 설정
+  if (newIndex === 2) {
     pageSize.value = 10000
   } else if (pageSize.value === 10000) {
     // 구매 탭이 아닌 다른 탭으로 변경될 때만 50으로 변경
@@ -934,4 +1061,28 @@ watch(() => currentTabIndex.value, (newIndex) => {
 })
 
 </script>
+
+<style scoped>
+/* 구매 탭에서 체크박스가 비활성화된 row 스타일 */
+.purchase-order-grid :deep(.row-checkbox-disabled .ag-checkbox-input-wrapper) {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.purchase-order-grid :deep(.row-checkbox-disabled .ag-checkbox-input-wrapper input) {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.purchase-order-grid :deep(.row-checkbox-disabled .ag-checkbox-input-wrapper .ag-checkbox-input) {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 비활성화된 체크박스의 체크 표시도 뿌옇게 */
+.purchase-order-grid :deep(.row-checkbox-disabled .ag-checkbox-input-wrapper .ag-checkbox-input:checked) {
+  opacity: 0.4;
+}
+</style>
 

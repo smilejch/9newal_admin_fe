@@ -113,3 +113,29 @@ export async function fetchEstimateProductsAll(queryParams, orderMstNo) {
   });
   return response.data;
 }
+
+/**
+ * 견적 목록 조회 - orderMstNo로 견적 목록 조회
+ */
+export async function fetchEstimateList(queryParams, orderMstNo) {
+  const response = await instance.get(`/purchase/shipments/estimates/${orderMstNo}`, {
+    params: queryParams
+  });
+  return response.data;
+}
+
+/**
+ * 견적서 상세 조회 - estimateId로 견적서 상세 정보 조회
+ */
+export async function fetchEstimateDetail(estimateId) {
+  const response = await instance.get(`/purchase/shipments/estimates/${estimateId}/detail`);
+  return response.data;
+}
+
+/**
+ * 견적서 입금확인 - orderShipmentEstimateNo로 입금확인 처리
+ */
+export async function confirmEstimateDeposit(orderShipmentEstimateNo) {
+  const response = await instance.put(`/purchase/shipments/estimates/${orderShipmentEstimateNo}/deposit-confirm`);
+  return response.data;
+}
