@@ -8,10 +8,73 @@
     @close="handleClose"
   >
     <template #content>
-      <div class="purchase-dtl-form modal-content h-[80vh] flex flex-col">
+      <div class="purchase-dtl-form modal-content h-[calc(98.5vh-8.5rem)] flex flex-col">
+        <!-- 발주 정보 표시 -->
+        <div v-if="orderInfo" class="px-4 pt-2 pb-1 border-b border-gray-200 bg-gray-50">
+          <div class="flex items-center gap-4 text-xs text-gray-600">
+            <span v-if="orderInfo.company_name">
+              <span class="font-medium text-gray-700">회사:</span> {{ orderInfo.company_name }}
+            </span>
+            <span v-if="orderInfo.platform_type_name">
+              <span class="font-medium text-gray-700">구분:</span> {{ orderInfo.platform_type_name }}
+            </span>
+            <span v-if="orderInfo.order_date">
+              <span class="font-medium text-gray-700">발주일:</span> {{ orderInfo.order_date }}
+            </span>
+          </div>
+        </div>
         <TabGroup :selectedIndex="currentTabIndex" @change="handleTabChange">
             <div class="sticky top-0 bg-white z-10 border-b border-gray-200">
-                <div class="px-6 pt-6 pb-2">
+                <div class="px-4 pt-1 pb-2">
+                    <!-- 도움말 아이콘 -->
+                    <div class="flex justify-end mb-2">
+                        <div class="relative group">
+                            <button 
+                                type="button"
+                                class="text-gray-400 hover:text-gray-600 transition-colors"
+                                @mouseenter="showTooltip = true"
+                                @mouseleave="showTooltip = false"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </button>
+                            <!-- 툴팁 -->
+                            <div 
+                                v-show="showTooltip"
+                                class="absolute right-0 top-full mt-2 w-80 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50"
+                                @mouseenter="showTooltip = true"
+                                @mouseleave="showTooltip = false"
+                            >
+                                <div class="space-y-3">
+                                    <div>
+                                        <div class="font-semibold mb-2 text-sm">센터 탭 설명</div>
+                                        <div class="space-y-1.5">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-4 h-4 bg-purple-500 rounded"></div>
+                                                <span>구매 요청 센터</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-gray-700 pt-3">
+                                        <div class="font-semibold mb-2 text-sm">상품 색상 설명</div>
+                                        <div class="space-y-1.5">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-4 h-4 bg-blue-100 rounded"></div>
+                                                <span>전체센터 탭에서의 구매요청 상품</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-4 h-4 bg-red-50 rounded"></div>
+                                                <span>견적 실패 상품</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 화살표 -->
+                                <div class="absolute -top-1 right-4 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div ref="tabListContainer" class="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                         <TabList class="flex space-x-1 min-w-max mt-2">
                         <Tab v-for="(tab, index) in (tabs || [])" :key="tab.order_shipment_mst_no || tab.id" v-slot="{ selected }">
@@ -49,7 +112,7 @@
                     <TabPanel 
                         v-for="(tab, index) in (tabs || [])" 
                         :key="tab.order_shipment_mst_no || tab.id"
-                        class="bg-white p-6 h-full"
+                        class="bg-white p-4 h-full"
                     >
                         <div class="h-full flex flex-col">
                             <div class="flex-1 min-h-0">
@@ -118,6 +181,35 @@
                                     </template>
                                 </PageDataGrid>
                             </div>
+                            <!-- 통계 영역 (구매 탭 또는 estimated_yn이 1인 동적 센터 탭에서만 표시) -->
+                            <div v-if="currentTabIndex === 2 || (currentTabIndex > 2 && currentEstimatedYn === 1)" class="mt-2 border-t border-gray-200 pt-2">
+                                <div class="grid grid-cols-4 gap-3">
+                                    <div class="bg-gray-50 rounded p-2">
+                                        <div class="text-xs text-gray-600 mb-0.5">확정수량 합계</div>
+                                        <div class="text-sm font-semibold text-gray-900">
+                                            {{ formatNumber(statistics.confirmedQuantity) }}
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 rounded p-2">
+                                        <div class="text-xs text-gray-600 mb-0.5">제품금액 합계</div>
+                                        <div class="text-sm font-semibold text-gray-900">
+                                            {{ formatCurrency(statistics.productTotalAmount) }}
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 rounded p-2">
+                                        <div class="text-xs text-gray-600 mb-0.5">포장금액 합계</div>
+                                        <div class="text-sm font-semibold text-gray-900">
+                                            {{ formatCurrency(statistics.packageTotalAmount) }}
+                                        </div>
+                                    </div>
+                                    <div class="bg-blue-50 rounded p-2 border border-blue-200">
+                                        <div class="text-xs text-blue-600 mb-0.5 font-medium">총금액 합계</div>
+                                        <div class="text-sm font-bold text-blue-900">
+                                            {{ formatCurrency(statistics.totalAmount) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </TabPanel>
                 </TabPanels>
@@ -155,6 +247,10 @@ const props = defineProps({
   orderMstNo: {
     type: [String, Number],
     default: null
+  },
+  orderInfo: {
+    type: Object,
+    default: null
   }
 })
 
@@ -178,6 +274,8 @@ const isAutoSelectEnabled = ref(true)
 // 견적서 모달 상태
 const isEstimateModalOpen = ref(false)
 const selectedOrderShipmentEstimateNo = ref(null)
+// 툴팁 표시 상태
+const showTooltip = ref(false)
 
 // 행 선택 설정 (구매 탭에서만 활성화)
 const rowSelection = computed(() => {
@@ -228,6 +326,64 @@ const currentEstimatedYn = computed(() => {
   const currentTab = tabs.value[currentTabIndex.value]
   return currentTab?.estimated_yn ?? null
 })
+
+// 통계 계산 (구매 탭 또는 estimated_yn이 1인 동적 센터 탭에서 fail_yn이 1이 아닌 row만 포함)
+const statistics = computed(() => {
+  // 구매 탭 또는 estimated_yn이 1인 동적 센터 탭이 아니면 빈 통계 반환
+  const isPurchaseTab = currentTabIndex.value === 2
+  const isEstimatedCenterTab = currentTabIndex.value > 2 && currentEstimatedYn.value === 1
+  
+  if (!isPurchaseTab && !isEstimatedCenterTab) {
+    return {
+      confirmedQuantity: 0,
+      productTotalAmount: 0,
+      packageTotalAmount: 0,
+      totalAmount: 0
+    }
+  }
+
+  // fail_yn이 1이 아닌 row만 필터링
+  const filteredData = dataList.value.filter(item => item.fail_yn !== 1)
+
+  // 합계 계산
+  const confirmedQuantity = filteredData.reduce((sum, item) => {
+    return sum + (Number(item.confirmed_quantity) || 0)
+  }, 0)
+
+  const productTotalAmount = filteredData.reduce((sum, item) => {
+    return sum + (Number(item.product_product_total_amount) || 0)
+  }, 0)
+
+  const packageTotalAmount = filteredData.reduce((sum, item) => {
+    return sum + (Number(item.package_vinyl_spec_total_amount) || 0)
+  }, 0)
+
+  const totalAmount = filteredData.reduce((sum, item) => {
+    return sum + (Number(item.total_amount) || 0)
+  }, 0)
+
+  return {
+    confirmedQuantity,
+    productTotalAmount,
+    packageTotalAmount,
+    totalAmount
+  }
+})
+
+// 숫자 포맷팅 함수
+const formatNumber = (value) => {
+  if (value == null) return '0'
+  return new Intl.NumberFormat('ko-KR').format(value)
+}
+
+// 통화 포맷팅 함수
+const formatCurrency = (value) => {
+  if (value == null) return '0'
+  return new Intl.NumberFormat('ko-KR', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  }).format(value)
+}
 
 const loadShipmentMstData = async () => {
   if (!props.orderMstNo) return
@@ -400,7 +556,7 @@ const colDefs = computed(() => {
     return [
       {
         field: "estimate_id",
-        headerName: "견적서 ID",
+        headerName: "견적서 번호",
         headerClass: 'ag-header-cell-center',
         cellClass: 'text-center',
         minWidth: 150,
@@ -453,7 +609,20 @@ const colDefs = computed(() => {
     ]
   }
 
-  const baseColDefs = [
+  const baseColDefs = []
+  
+  // 구매 탭에서만 견적서 번호 컬럼을 가장 앞에 추가
+  if (currentTabIndex.value === 2) {
+    baseColDefs.push({
+      field: "estimate_id",
+      headerName: "견적서 번호",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center',
+      minWidth: 150,
+    })
+  }
+  
+  baseColDefs.push(
     { 
       field: "order_number", 
       headerName: "발주번호", 
@@ -468,7 +637,7 @@ const colDefs = computed(() => {
       cellClass: 'text-center',
       minWidth: 100,
     }
-  ]
+  )
 
   // 전체센터 탭과 구매 탭에서만 확정상태 컬럼 표시
   if (currentTabIndex.value === 0 || currentTabIndex.value === 2) {
@@ -550,6 +719,13 @@ const colDefs = computed(() => {
       minWidth: 100,
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-right',
+    },
+    { 
+      field: "remark", 
+      headerName: "비고", 
+      minWidth: 150,
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-left',
     },
   ]
 
@@ -846,7 +1022,7 @@ const scrollToTab = (tabIndex) => {
   }
 }
 
-// 행 스타일 설정 (전체센터 탭에서 estimated_yn이 1인 경우 연한 파란색 배경)
+// 행 스타일 설정 (전체센터 탭에서 estimated_yn이 1인 경우 연한 파란색 배경, fail_yn이 1인 경우 연한 빨간색 배경)
 const getRowStyle = (params) => {
   const style = {}
   
@@ -855,32 +1031,37 @@ const getRowStyle = (params) => {
     style.cursor = 'pointer'
   }
   
-  // 전체센터 탭에서만 estimated_yn이 1인 경우 연한 파란색 배경
-  if (currentTabIndex.value === 0 && params.data?.estimated_yn === 1) {
+  // fail_yn이 1인 경우 연한 빨간색 배경 (우선순위 높음)
+  if (params.data?.fail_yn === 1) {
+    style.backgroundColor = '#fef2f2' // 연한 빨간색 (red-50)
+  }
+  // 전체센터 탭에서만 estimated_yn이 1인 경우 연한 파란색 배경 (fail_yn이 1이 아닐 때만)
+  else if (currentTabIndex.value === 0 && params.data?.estimated_yn === 1) {
     style.backgroundColor = '#e0f2fe' // 연한 파란색 (blue-100)
   }
   
   return Object.keys(style).length > 0 ? style : null
 }
 
-// 행 클래스 설정 (구매 탭에서 PAYMENT_COMPLETED가 아닌 row에 disabled 클래스 추가)
+// 행 클래스 설정 (구매 탭에서 PAYMENT_COMPLETED가 아닌 row 또는 fail_yn이 1인 row에 disabled 클래스 추가)
 const getRowClass = (params) => {
-  // 구매 탭이고 PAYMENT_COMPLETED가 아닌 경우 disabled 클래스 추가
-  if (currentTabIndex.value === 2 && params.data?.order_shipment_mst_status_cd !== 'PAYMENT_COMPLETED') {
+  // 구매 탭이고 (PAYMENT_COMPLETED가 아니거나 fail_yn이 1인 경우) disabled 클래스 추가
+  if (currentTabIndex.value === 2 && 
+      (params.data?.order_shipment_mst_status_cd !== 'PAYMENT_COMPLETED' || params.data?.fail_yn === 1)) {
     return 'row-checkbox-disabled'
   }
   return null
 }
 
-// 행 선택 가능 여부 설정 (구매 탭에서만 PAYMENT_COMPLETED 상태인 row만 선택 가능)
+// 행 선택 가능 여부 설정 (구매 탭에서만 PAYMENT_COMPLETED 상태이고 fail_yn이 1이 아닌 row만 선택 가능)
 const isRowSelectable = (params) => {
   // 구매 탭이 아니면 모든 row 선택 가능
   if (currentTabIndex.value !== 2) {
     return true
   }
   
-  // 구매 탭인 경우 PAYMENT_COMPLETED 상태인 row만 선택 가능
-  return params.data?.order_shipment_mst_status_cd === 'PAYMENT_COMPLETED'
+  // 구매 탭인 경우 PAYMENT_COMPLETED 상태이고 fail_yn이 1이 아닌 row만 선택 가능
+  return params.data?.order_shipment_mst_status_cd === 'PAYMENT_COMPLETED' && params.data?.fail_yn !== 1
 }
 
 // 드롭다운 버튼을 현재 탭 상태에 따라 동적으로 생성

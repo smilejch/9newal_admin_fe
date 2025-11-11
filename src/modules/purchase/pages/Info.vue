@@ -107,6 +107,7 @@
     <PurchaseOrderDtlModal
       :isOpen="isDtlModalOpen"
       :orderMstNo="selectedOrderMstNo"
+      :orderInfo="selectedOrderInfo"
       @close="closeDtlModal"
     />
 
@@ -139,6 +140,7 @@ const orderStatusOptions = ref([]);
 
 const isDtlModalOpen = ref(false)
 const selectedOrderMstNo = ref(null)
+const selectedOrderInfo = ref(null)
 
 // URL 쿼리 파라미터 (페이지네이션 상태만)
 const queryParams = computed(() => ({
@@ -170,18 +172,24 @@ const defaultColDef = ref({
 })
 
 // 모달 관련 함수들
-const openDtlModal = (orderMstNo) => {
+const openDtlModal = (orderMstNo, orderData) => {
   selectedOrderMstNo.value = orderMstNo
+  selectedOrderInfo.value = orderData ? {
+    company_name: orderData.company_name || '',
+    platform_type_name: orderData.platform_type_name || '',
+    order_date: orderData.order_date || ''
+  } : null
   isDtlModalOpen.value = true
 }
 
-const dtlEditItem = (orderMstNo) => {
-  openDtlModal(orderMstNo)
+const dtlEditItem = (orderMstNo, orderData) => {
+  openDtlModal(orderMstNo, orderData)
 }
 
 const closeDtlModal = () => {
   isDtlModalOpen.value = false
   selectedOrderMstNo.value = null
+  selectedOrderInfo.value = null
   searchData()
 }
 
@@ -262,7 +270,7 @@ const colDefs = ref([
       viewBtn.innerHTML = `
         <span class="material-icons" style="font-size: 16px">search</span>
       `
-      viewBtn.addEventListener('click', () => dtlEditItem(params.data.order_mst_no))
+      viewBtn.addEventListener('click', () => dtlEditItem(params.data.order_mst_no, params.data))
       
       container.appendChild(viewBtn)
       

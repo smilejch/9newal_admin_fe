@@ -29,7 +29,8 @@
         
         <!-- 중간 모달 내용 영역 -->
         <div :class="[
-          'px-6 py-4 overflow-y-auto',
+          props.size === 'fullscreen' ? 'px-2 py-2' : 'px-6 py-4',
+          'overflow-y-auto',
           contentSizeClass
         ]">
           <div class="text-sm text-gray-700 leading-relaxed">
