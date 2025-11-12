@@ -139,3 +139,31 @@ export async function confirmEstimateDeposit(orderShipmentEstimateNo) {
   const response = await instance.put(`/purchase/shipments/estimates/${orderShipmentEstimateNo}/deposit-confirm`);
   return response.data;
 }
+
+/**
+ * 전체센터 탭 엑셀 다운로드 - orderMstNo로 전체센터 구매 정보 엑셀 다운로드 (estimated_yn이 1인 데이터만)
+ */
+export async function downloadPurchaseListExcel(orderMstNo) {
+  return await downloadExcel(`/purchase/orders/${orderMstNo}/shipments/download`, '전체센터_구매정보.xlsx');
+}
+
+/**
+ * 견적 탭 엑셀 다운로드 - orderMstNo로 견적 목록 엑셀 다운로드
+ */
+export async function downloadEstimateListExcel(orderMstNo) {
+  return await downloadExcel(`/purchase/shipments/estimates/${orderMstNo}/download`, '견적목록.xlsx');
+}
+
+/**
+ * 구매 탭 엑셀 다운로드 - orderMstNo로 구매 탭 견적 상품 정보 전체 엑셀 다운로드
+ */
+export async function downloadEstimateProductsAllExcel(orderMstNo) {
+  return await downloadExcel(`/purchase/shipments/${orderMstNo}/estimate-products-all/download`, '구매정보.xlsx');
+}
+
+/**
+ * 1688 송장번호 업로드 - orderMstNo로 1688 송장번호 엑셀 파일 업로드
+ */
+export async function upload1688TrackingNumber(orderMstNo, file) {
+  return await uploadExcel(`/purchase/orders/${orderMstNo}/1688-tracking-number/upload`, file);
+}

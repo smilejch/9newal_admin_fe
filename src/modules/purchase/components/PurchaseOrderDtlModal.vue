@@ -225,6 +225,15 @@
     :orderShipmentEstimateNo="selectedOrderShipmentEstimateNo"
     @close="closeEstimateModal"
   />
+  
+  <!-- 1688 송장번호 업로드 모달 -->
+  <UploadModal
+    :isOpen="is1688UploadModalOpen"
+    title="1688 송장번호 업로드"
+    :uploadFunction="handle1688TrackingNumberUpload"
+    @close="close1688UploadModal"
+    @upload-success="handle1688UploadSuccess"
+  />
 </template>
 
 <script setup>
@@ -236,8 +245,9 @@ import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import CommonButtons from '@/components/CommonButtons.vue'
 import { showError, showSuccess, showInfo } from '@/utils/alert'
-import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail } from '@/modules/purchase/api/purchase'
+import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688TrackingNumber } from '@/modules/purchase/api/purchase'
 import EstimateModal from './EstimateModal.vue'
+import UploadModal from '@/components/UploadModal.vue'
 
 const props = defineProps({
   isOpen: {
@@ -276,6 +286,8 @@ const isEstimateModalOpen = ref(false)
 const selectedOrderShipmentEstimateNo = ref(null)
 // 툴팁 표시 상태
 const showTooltip = ref(false)
+// 1688 송장번호 업로드 모달 상태
+const is1688UploadModalOpen = ref(false)
 
 // 행 선택 설정 (구매 탭에서만 활성화)
 const rowSelection = computed(() => {
@@ -570,7 +582,7 @@ const colDefs = computed(() => {
       },
       {
         field: "estimate_total_amount",
-        headerName: "견적 총액",
+        headerName: "견적총액",
         headerClass: 'ag-header-cell-center',
         cellClass: 'text-right',
         minWidth: 120,
@@ -714,20 +726,31 @@ const colDefs = computed(() => {
       cellClass: 'text-right',
     },
     { 
-      field: "tracking_number", 
-      headerName: "송장번호", 
-      minWidth: 100,
+      field: "purchase_tracking_number", 
+      headerName: "1688 운송장번호", 
+      minWidth: 200,
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-right',
     },
     { 
+      field: "tracking_number", 
+      headerName: "CJ 운송장번호", 
+      minWidth: 200,
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-right',
+    },
+  ]
+
+  // 전체센터 탭이 아닐 때만 비고 컬럼 추가
+  if (currentTabIndex.value !== 0) {
+    commonColDefs.push({
       field: "remark", 
       headerName: "비고", 
       minWidth: 150,
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-left',
-    },
-  ]
+    })
+  }
 
   // 구매 탭 또는 estimated_yn이 1인 센터 탭에만 금액 관련 컬럼 추가
   if (currentTabIndex.value === 2 || (currentTabIndex.value > 2 && currentEstimatedYn.value === 1)) {
@@ -1085,16 +1108,17 @@ const dropdownButtons = computed(() => {
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
-  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 엑셀 다운로드
+  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 1688 송장번호 업로드, 엑셀 다운로드
   if (currentTabIndex.value === 2) {
     dataManagementButtons.push({ label: '선택 아이템 구매', value: 'purchaseSelectedItems' })
     dataManagementButtons.push({ label: 'CJ 운송장 발급', value: 'issueCjTrackingNumber' })
+    dataManagementButtons.push({ label: '1688 송장번호 업로드', value: 'upload1688TrackingNumber' })
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
-  // estimated_yn이 0인 센터 탭: 엑셀 다운로드만
-  if (currentTabIndex.value > 2 && currentEstimatedYn.value === 0) {
-    dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
+  // 동적 센터 탭 중 estimated_yn이 1인 경우만: CJ 운송장 발급
+  if (currentTabIndex.value > 2 && currentEstimatedYn.value === 1) {
+    dataManagementButtons.push({ label: 'CJ 운송장 발급', value: 'issueCjTrackingNumber' })
   }
   
   if (dataManagementButtons.length > 0) {
@@ -1126,6 +1150,9 @@ const handleDropdownClick = (value) => {
     case 'issueCjTrackingNumber':
       handleIssueCjTrackingNumber()
       break
+    case 'upload1688TrackingNumber':
+      open1688UploadModal()
+      break
     default:
       console.log('알 수 없는 액션:', value)
   }
@@ -1134,8 +1161,30 @@ const handleDropdownClick = (value) => {
 // 엑셀 다운로드
 const handleExcelDownload = async () => {
   try {
-    // TODO: 엑셀 다운로드 API 호출
-    showInfo('준비중', '엑셀 다운로드 기능은 준비중입니다.')
+    if (!props.orderMstNo) {
+      showError('오류', '발주번호가 없습니다.')
+      return
+    }
+
+    // 전체센터 탭인 경우
+    if (currentTabIndex.value === 0) {
+      await downloadPurchaseListExcel(props.orderMstNo)
+      showSuccess('다운로드 완료', '엑셀 파일이 다운로드되었습니다.')
+    } 
+    // 견적 탭인 경우
+    else if (currentTabIndex.value === 1) {
+      await downloadEstimateListExcel(props.orderMstNo)
+      showSuccess('다운로드 완료', '엑셀 파일이 다운로드되었습니다.')
+    } 
+    // 구매 탭인 경우
+    else if (currentTabIndex.value === 2) {
+      await downloadEstimateProductsAllExcel(props.orderMstNo)
+      showSuccess('다운로드 완료', '엑셀 파일이 다운로드되었습니다.')
+    } 
+    else {
+      // TODO: 다른 탭의 엑셀 다운로드 API 호출
+      showInfo('준비중', '엑셀 다운로드 기능은 준비중입니다.')
+    }
   } catch (error) {
     console.error('엑셀 다운로드 실패:', error)
     showError('다운로드 실패', '엑셀 파일 다운로드 중 오류가 발생했습니다.')
@@ -1174,18 +1223,71 @@ const handlePurchaseSelectedItems = async () => {
 // CJ 운송장 발급
 const handleIssueCjTrackingNumber = async () => {
   try {
-    // 구매 탭에서만 동작
-    if (currentTabIndex.value !== 1) {
-      showError('탭 오류', '구매 탭에서만 사용할 수 있습니다.')
+    // 구매 탭 또는 동적 센터 탭에서만 동작
+    if (currentTabIndex.value === 2) {
+      // 구매 탭인 경우
+      const gridApi = agGrid.value
+      if (!gridApi) {
+        showError('그리드 오류', '데이터 그리드가 아직 준비되지 않았습니다.')
+        return
+      }
+      
+      const selectedRows = gridApi.getSelectedRows()
+      if (!selectedRows || selectedRows.length === 0) {
+        showInfo('선택 필요', 'CJ 운송장을 발급할 항목을 선택하세요.')
+        return
+      }
+      
+      // TODO: 구매 탭 선택 아이템 CJ 운송장 발급 API 호출
+      showInfo('준비중', 'CJ 운송장 발급 기능은 준비중입니다.')
+    } else if (currentTabIndex.value > 2) {
+      // 동적 센터 탭인 경우
+      if (!currentShipmentMstNo.value) {
+        showError('오류', '센터 정보가 없습니다.')
+        return
+      }
+      
+      // TODO: 동적 센터 탭 CJ 운송장 발급 API 호출
+      showInfo('준비중', 'CJ 운송장 발급 기능은 준비중입니다.')
+    } else {
+      showError('탭 오류', '구매 탭 또는 센터 탭에서만 사용할 수 있습니다.')
       return
     }
-    
-    // TODO: CJ 운송장 발급 API 호출 (구매 탭의 선택된 항목 또는 전체)
-    showInfo('준비중', 'CJ 운송장 발급 기능은 준비중입니다.')
   } catch (error) {
     console.error('운송장 발급 실패:', error)
     showError('운송장 발급 실패', '운송장 발급 중 오류가 발생했습니다.')
   }
+}
+
+// 1688 송장번호 업로드 모달 열기
+const open1688UploadModal = () => {
+  if (!props.orderMstNo) {
+    showError('오류', '발주번호가 없습니다.')
+    return
+  }
+  is1688UploadModalOpen.value = true
+}
+
+// 1688 송장번호 업로드 모달 닫기
+const close1688UploadModal = () => {
+  is1688UploadModalOpen.value = false
+}
+
+// 1688 송장번호 업로드 처리
+const handle1688TrackingNumberUpload = async (file) => {
+  if (!props.orderMstNo) {
+    throw new Error('발주번호가 없습니다.')
+  }
+  
+  const result = await upload1688TrackingNumber(props.orderMstNo, file)
+  return result
+}
+
+// 1688 송장번호 업로드 성공 처리
+const handle1688UploadSuccess = () => {
+  showSuccess('업로드 완료', '1688 송장번호가 성공적으로 업로드되었습니다.')
+  // 데이터 새로고침
+  loadTabData()
 }
 
 // 페이지네이션 핸들러
