@@ -244,8 +244,8 @@ import CommonModal from '@/components/CommonModal.vue'
 import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import CommonButtons from '@/components/CommonButtons.vue'
-import { showError, showSuccess, showInfo } from '@/utils/alert'
-import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688TrackingNumber } from '@/modules/purchase/api/purchase'
+import { showError, showSuccess, showInfo, showWarning, confirmAction } from '@/utils/alert'
+import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688TrackingNumber, issueCjTrackingNumber, create1688Order } from '@/modules/purchase/api/purchase'
 import EstimateModal from './EstimateModal.vue'
 import UploadModal from '@/components/UploadModal.vue'
 
@@ -632,6 +632,15 @@ const colDefs = computed(() => {
       cellClass: 'text-center',
       minWidth: 150,
     })
+    
+    // 구매 탭에 구매번호 컬럼 추가 (견적서 번호 다음)
+    baseColDefs.push({
+      field: "purchase_order_number",
+      headerName: "구매번호",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center',
+      minWidth: 150,
+    })
   }
   
   baseColDefs.push(
@@ -650,6 +659,18 @@ const colDefs = computed(() => {
       minWidth: 100,
     }
   )
+  
+  // 동적 탭에서 estimated_yn이 1인 경우 발주번호 다음에 구매번호 컬럼 추가
+  if (currentTabIndex.value > 2 && currentEstimatedYn.value === 1) {
+    // 발주번호와 물류센터 다음에 구매번호 추가
+    baseColDefs.push({
+      field: "purchase_order_number",
+      headerName: "구매번호",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center',
+      minWidth: 150,
+    })
+  }
 
   // 전체센터 탭과 구매 탭에서만 확정상태 컬럼 표시
   if (currentTabIndex.value === 0 || currentTabIndex.value === 2) {
@@ -871,12 +892,117 @@ const onSelectionChanged = async (params) => {
     return
   }
   
+  // 비활성화된 행이 선택되었는지 확인하고 제거
+  let selectedNodes = params.api.getSelectedNodes() || []
+  const nodesToDeselect = []
+  
+  // 선택 가능한 모든 행과 선택된 행 수집
+  const selectableNodes = []
+  let selectedSelectableCount = 0
+  
+  // 모든 노드를 순회하여 비활성화된 행이 선택되어 있는지 확인
+  params.api.forEachNode((node) => {
+    if (node.data) {
+      // 비활성화 조건: order_shipment_mst_status_cd !== 'PAYMENT_COMPLETED' 또는 fail_yn === 1
+      const isDisabled = node.data.order_shipment_mst_status_cd !== 'PAYMENT_COMPLETED' || node.data.fail_yn === 1
+      
+      if (!isDisabled) {
+        // 선택 가능한 행
+        selectableNodes.push(node)
+        if (node.isSelected()) {
+          selectedSelectableCount++
+        }
+      } else if (isDisabled && node.isSelected()) {
+        // 비활성화된 행이 선택되어 있으면 해제 대상에 추가
+        nodesToDeselect.push(node)
+      }
+    }
+  })
+  
+  // 비활성화된 행이 선택되어 있으면 해제
+  if (nodesToDeselect.length > 0) {
+    isProcessingSelection.value = true
+    // suppressEvent를 false로 설정하여 이벤트가 발생하도록 함
+    // 하지만 isProcessingSelection 플래그로 무한 루프 방지
+    nodesToDeselect.forEach(node => {
+      node.setSelected(false, false)
+    })
+    await nextTick()
+    
+    // 선택 상태 업데이트
+    const updatedSelectedNodes = params.api.getSelectedNodes() || []
+    const updatedSelectedRowIds = new Set()
+    const updatedSelectedLinkedOpenUids = new Set()
+    
+    updatedSelectedNodes.forEach(node => {
+      if (node.id) {
+        updatedSelectedRowIds.add(node.id)
+      }
+      if (node.data && node.data.linked_open_uid) {
+        updatedSelectedLinkedOpenUids.add(node.data.linked_open_uid)
+      }
+    })
+    
+    previousSelectedLinkedOpenUids.value = new Set(updatedSelectedLinkedOpenUids)
+    previousSelectedRowIds.value = new Set(updatedSelectedRowIds)
+    
+    isProcessingSelection.value = false
+    // 비활성화된 행을 제거한 후 종료
+    return
+  }
+  
+  // 선택 가능한 모든 행이 선택되어 있는지 확인
+  // 모든 행이 선택되었을 때만 헤더 체크박스를 체크
+  // ag-grid의 헤더 체크박스를 찾는 다른 방법 사용
+  let gridElement = null
+  let headerCheckbox = null
+  
+  // agGridRef.value가 배열인 경우 첫 번째 요소 확인
+  if (agGridRef.value && Array.isArray(agGridRef.value) && agGridRef.value.length > 0) {
+    const firstElement = agGridRef.value[0]
+    if (firstElement && firstElement.$el) {
+      gridElement = firstElement.$el
+    }
+  } else if (agGridRef.value && agGridRef.value.$el) {
+    gridElement = agGridRef.value.$el
+  }
+  
+  // gridElement에서 헤더 체크박스 찾기
+  if (gridElement) {
+    headerCheckbox = gridElement.querySelector('.ag-header-select-all input') || 
+                     gridElement.querySelector('.ag-header .ag-checkbox input') ||
+                     gridElement.querySelector('.ag-header input[type="checkbox"]')
+  }
+  
+  // gridElement를 찾지 못한 경우 document에서 직접 찾기
+  if (!headerCheckbox) {
+    // 현재 탭의 ag-grid만 찾기 위해 클래스로 필터링
+    const allGrids = document.querySelectorAll('.purchase-order-grid')
+    for (const grid of allGrids) {
+      const checkbox = grid.querySelector('.ag-header-select-all input') || 
+                       grid.querySelector('.ag-header .ag-checkbox input') ||
+                       grid.querySelector('.ag-header input[type="checkbox"]')
+      if (checkbox) {
+        headerCheckbox = checkbox
+        gridElement = grid
+        break
+      }
+    }
+  }
+  
+  // 선택 가능한 모든 행이 선택되었을 때만 헤더 체크박스 체크
+  if (selectableNodes.length > 0 && selectedSelectableCount === selectableNodes.length) {
+    if (headerCheckbox && !headerCheckbox.checked) {
+      params.api.refreshHeader()
+      await nextTick()
+    }
+  }
+  
   // 연동 선택이 비활성화되어 있으면 동일 linked_open_uid 체크 기능을 사용하지 않음
   // 체크한 체크박스만 체크/해제하고 종료
   if (!isAutoSelectEnabled.value) {
     // 상태만 업데이트하고 종료 (연동 선택 기능 사용 안함)
     const selectedRows = params.api.getSelectedRows() || []
-    const selectedNodes = params.api.getSelectedNodes() || []
     const currentSelectedRowIds = new Set()
     const currentSelectedLinkedOpenUids = new Set()
     
@@ -905,7 +1031,7 @@ const onSelectionChanged = async (params) => {
   isProcessingSelection.value = true
   
   const selectedRows = params.api.getSelectedRows() || []
-  const selectedNodes = params.api.getSelectedNodes() || []
+  selectedNodes = params.api.getSelectedNodes() || []
   
   // 현재 선택된 row ID 수집
   const currentSelectedRowIds = new Set()
@@ -1139,16 +1265,25 @@ const toggleAutoSelect = () => {
 }
 
 // 드롭다운 클릭 핸들러
-const handleDropdownClick = (value) => {
+const handleDropdownClick = async (value) => {
   switch (value) {
     case 'excelDownload':
-      handleExcelDownload()
+      const excelConfirmed = await confirmAction('엑셀 다운로드', '엑셀 파일을 다운로드하시겠습니까?', '다운로드', '취소')
+      if (excelConfirmed) {
+        handleExcelDownload()
+      }
       break
     case 'purchaseSelectedItems':
-      handlePurchaseSelectedItems()
+      const purchaseConfirmed = await confirmAction('선택 아이템 구매', '선택한 항목을 구매하시겠습니까?', '구매', '취소')
+      if (purchaseConfirmed) {
+        handlePurchaseSelectedItems()
+      }
       break
     case 'issueCjTrackingNumber':
-      handleIssueCjTrackingNumber()
+      const cjConfirmed = await confirmAction('CJ 운송장 발급', 'CJ 운송장을 발급하시겠습니까?', '발급', '취소')
+      if (cjConfirmed) {
+        handleIssueCjTrackingNumber()
+      }
       break
     case 'upload1688TrackingNumber':
       open1688UploadModal()
@@ -1212,8 +1347,24 @@ const handlePurchaseSelectedItems = async () => {
       return
     }
     
-    // TODO: 선택 아이템 구매 API 호출
-    showInfo('준비중', '선택 아이템 구매 기능은 준비중입니다.')
+    // 선택된 row들에서 order_shipment_dtl_no 추출 (중복 제거)
+    const orderShipmentDtlNos = [...new Set(
+      selectedRows
+        .map(row => row.order_shipment_dtl_no)
+        .filter(no => no != null)
+    )]
+    
+    if (orderShipmentDtlNos.length === 0) {
+      showError('오류', '선택된 항목에 유효한 주문 상세번호가 없습니다.')
+      return
+    }
+    
+    // 선택 아이템 구매 API 호출
+    await create1688Order(orderShipmentDtlNos)
+    showSuccess('구매 완료', '선택한 항목이 성공적으로 구매되었습니다.')
+    
+    // 데이터 새로고침
+    loadTabData()
   } catch (error) {
     console.error('구매 실패:', error)
     showError('구매 실패', '구매 처리 중 오류가 발생했습니다.')
@@ -1238,8 +1389,50 @@ const handleIssueCjTrackingNumber = async () => {
         return
       }
       
-      // TODO: 구매 탭 선택 아이템 CJ 운송장 발급 API 호출
-      showInfo('준비중', 'CJ 운송장 발급 기능은 준비중입니다.')
+      // 선택된 row들에서 order_shipment_estimate_no 추출 (중복 제거)
+      const orderShipmentEstimateNos = [...new Set(
+        selectedRows
+          .map(row => row.order_shipment_packing_mst_no)
+          .filter(no => no != null)
+      )]
+      
+      if (orderShipmentEstimateNos.length === 0) {
+        showError('오류', '선택된 항목에 유효한 견적번호가 없습니다.')
+        return
+      }
+      
+      // CJ 운송장 발급 API 호출
+      const response = await issueCjTrackingNumber(orderShipmentEstimateNos)
+      
+      // API 응답 처리
+      const apiMessage = response?.message || 'CJ 운송장 발급 처리되었습니다.'
+      const errorDetails = response?.data?.error_details || []
+      
+      // error_details를 문자열 배열로 변환
+      const errorDetailsText = errorDetails.map((error, index) => {
+        const boxName = error.box_name || 'N/A'
+        const errorMsg = error.error || '알 수 없는 오류'
+        const cjInvoiceNo = error.cj_response?.DATA?.INVC_NO || 'N/A'
+        return `${index + 1}. 박스명: ${boxName}, 오류: ${errorMsg}, CJ 송장번호: ${cjInvoiceNo}`
+      })
+      
+      // error_count가 0이면 성공, 아니면 에러/경고
+      const errorCount = response?.data?.error_count || 0
+      const successCount = response?.data?.success_count || 0
+      
+      if (errorCount === 0 && successCount > 0) {
+        // 모두 성공
+        showSuccess('CJ 운송장 발급', apiMessage, errorDetailsText)
+      } else if (errorCount > 0 && successCount > 0) {
+        // 일부 성공
+        showWarning('CJ 운송장 발급', apiMessage, errorDetailsText)
+      } else {
+        // 모두 실패
+        showError('CJ 운송장 발급', apiMessage, errorDetailsText)
+      }
+      
+      // 데이터 새로고침
+      loadTabData()
     } else if (currentTabIndex.value > 2) {
       // 동적 센터 탭인 경우
       if (!currentShipmentMstNo.value) {
@@ -1247,8 +1440,51 @@ const handleIssueCjTrackingNumber = async () => {
         return
       }
       
-      // TODO: 동적 센터 탭 CJ 운송장 발급 API 호출
-      showInfo('준비중', 'CJ 운송장 발급 기능은 준비중입니다.')
+      // fail_yn이 0인 row들에서 order_shipment_packing_mst_no 추출 (중복 제거)
+      const orderShipmentPackingMstNos = [...new Set(
+        dataList.value
+          .filter(row => row.fail_yn === 0)
+          .map(row => row.order_shipment_packing_mst_no)
+          .filter(no => no != null)
+      )]
+      
+      if (orderShipmentPackingMstNos.length === 0) {
+        showError('오류', 'CJ 운송장을 발급할 수 있는 항목이 없습니다. (fail_yn이 0인 항목이 없습니다)')
+        return
+      }
+      
+      // 동적 센터 탭 CJ 운송장 발급 API 호출
+      const response = await issueCjTrackingNumber(orderShipmentPackingMstNos)
+      
+      // API 응답 처리
+      const apiMessage = response?.message || 'CJ 운송장 발급 처리되었습니다.'
+      const errorDetails = response?.data?.error_details || []
+      
+      // error_details를 문자열 배열로 변환
+      const errorDetailsText = errorDetails.map((error, index) => {
+        const boxName = error.box_name || 'N/A'
+        const errorMsg = error.error || '알 수 없는 오류'
+        const cjInvoiceNo = error.cj_response?.DATA?.INVC_NO || 'N/A'
+        return `${index + 1}. 박스명: ${boxName}, 오류: ${errorMsg}, CJ 송장번호: ${cjInvoiceNo}`
+      })
+      
+      // error_count가 0이면 성공, 아니면 에러/경고
+      const errorCount = response?.data?.error_count || 0
+      const successCount = response?.data?.success_count || 0
+      
+      if (errorCount === 0 && successCount > 0) {
+        // 모두 성공
+        showSuccess('CJ 운송장 발급', apiMessage, errorDetailsText)
+      } else if (errorCount > 0 && successCount > 0) {
+        // 일부 성공
+        showWarning('CJ 운송장 발급', apiMessage, errorDetailsText)
+      } else {
+        // 모두 실패
+        showError('CJ 운송장 발급', apiMessage, errorDetailsText)
+      }
+      
+      // 데이터 새로고침
+      loadTabData()
     } else {
       showError('탭 오류', '구매 탭 또는 센터 탭에서만 사용할 수 있습니다.')
       return

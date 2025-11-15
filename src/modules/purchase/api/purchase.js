@@ -167,3 +167,23 @@ export async function downloadEstimateProductsAllExcel(orderMstNo) {
 export async function upload1688TrackingNumber(orderMstNo, file) {
   return await uploadExcel(`/purchase/orders/${orderMstNo}/1688-tracking-number/upload`, file);
 }
+
+/**
+ * CJ 운송장 발급 - 구매 탭에서 선택된 항목들의 order_shipment_packing_mst_no로 CJ 운송장 발급
+ */
+export async function issueCjTrackingNumber(orderShipmentPackingMstNos) {
+  const response = await instance.post('/purchase/shipments/cj-tracking-number/issue', {
+    order_shipment_packing_mst_nos: orderShipmentPackingMstNos
+  });
+  return response.data;
+}
+
+/**
+ * 선택 아이템 구매 - order_shipment_dtl_no 배열로 1688 주문 생성
+ */
+export async function create1688Order(orderShipmentDtlNos) {
+  const response = await instance.post('/purchase/shipments/1688-order/create', {
+    order_shipment_dtl_nos: orderShipmentDtlNos
+  });
+  return response.data;
+}
