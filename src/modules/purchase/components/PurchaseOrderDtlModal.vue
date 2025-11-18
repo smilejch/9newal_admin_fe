@@ -688,6 +688,17 @@ const colDefs = computed(() => {
       }
     })
   }
+  
+  // 구매 탭 또는 estimated_yn이 1인 동적 탭에 배송상태 컬럼 추가
+  if (currentTabIndex.value === 2 || (currentTabIndex.value > 2 && currentEstimatedYn.value === 1)) {
+    baseColDefs.push({
+      field: "delivery_status",
+      headerName: "배송상태",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center',
+      minWidth: 120,
+    })
+  }
 
   const commonColDefs = [
     { 
