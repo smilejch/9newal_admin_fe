@@ -162,10 +162,10 @@ export async function downloadEstimateProductsAllExcel(orderMstNo) {
 }
 
 /**
- * 1688 송장번호 업로드 - orderMstNo로 1688 송장번호 엑셀 파일 업로드
+ * 1688 구매번호 업로드 - orderMstNo로 1688 구매번호 엑셀 파일 업로드
  */
-export async function upload1688TrackingNumber(orderMstNo, file) {
-  return await uploadExcel(`/purchase/orders/${orderMstNo}/1688-tracking-number/upload`, file);
+export async function upload1688OrderNumber(orderMstNo, file) {
+  return await uploadExcel(`/purchase/orders/${orderMstNo}/1688-order-number/upload`, file);
 }
 
 /**

@@ -338,7 +338,7 @@ const handleUpload = async () => {
       // 성공시에만 모달 닫기
       setTimeout(() => {
         closeModal()
-      }, 1500)
+      }, 1000)
     } else {
       errorMessage.value = result.data.message
       // error_details 배열이 존재하면 설정

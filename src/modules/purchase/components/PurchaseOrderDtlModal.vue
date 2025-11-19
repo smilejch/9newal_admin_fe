@@ -226,11 +226,11 @@
     @close="closeEstimateModal"
   />
   
-  <!-- 1688 송장번호 업로드 모달 -->
+  <!-- 1688 구매번호 업로드 모달 -->
   <UploadModal
     :isOpen="is1688UploadModalOpen"
-    title="1688 송장번호 업로드"
-    :uploadFunction="handle1688TrackingNumberUpload"
+    title="1688 구매번호 업로드"
+    :uploadFunction="handle1688OrderNumberUpload"
     @close="close1688UploadModal"
     @upload-success="handle1688UploadSuccess"
   />
@@ -245,7 +245,7 @@ import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import CommonButtons from '@/components/CommonButtons.vue'
 import { showError, showSuccess, showInfo, showWarning, confirmAction } from '@/utils/alert'
-import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688TrackingNumber, issueCjTrackingNumber, create1688Order } from '@/modules/purchase/api/purchase'
+import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688OrderNumber, issueCjTrackingNumber, create1688Order } from '@/modules/purchase/api/purchase'
 import EstimateModal from './EstimateModal.vue'
 import UploadModal from '@/components/UploadModal.vue'
 
@@ -286,7 +286,7 @@ const isEstimateModalOpen = ref(false)
 const selectedOrderShipmentEstimateNo = ref(null)
 // 툴팁 표시 상태
 const showTooltip = ref(false)
-// 1688 송장번호 업로드 모달 상태
+// 1688 구매번호 업로드 모달 상태
 const is1688UploadModalOpen = ref(false)
 
 // 행 선택 설정 (구매 탭에서만 활성화)
@@ -1245,11 +1245,11 @@ const dropdownButtons = computed(() => {
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
-  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 1688 송장번호 업로드, 엑셀 다운로드
+  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 1688 구매번호 업로드, 엑셀 다운로드
   if (currentTabIndex.value === 2) {
     dataManagementButtons.push({ label: '선택 아이템 구매', value: 'purchaseSelectedItems' })
     dataManagementButtons.push({ label: 'CJ 운송장 발급', value: 'issueCjTrackingNumber' })
-    dataManagementButtons.push({ label: '1688 송장번호 업로드', value: 'upload1688TrackingNumber' })
+    dataManagementButtons.push({ label: '1688 구매번호 업로드', value: 'upload1688OrderNumber' })
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
@@ -1296,7 +1296,7 @@ const handleDropdownClick = async (value) => {
         handleIssueCjTrackingNumber()
       }
       break
-    case 'upload1688TrackingNumber':
+    case 'upload1688OrderNumber':
       open1688UploadModal()
       break
     default:
@@ -1506,7 +1506,7 @@ const handleIssueCjTrackingNumber = async () => {
   }
 }
 
-// 1688 송장번호 업로드 모달 열기
+// 1688 구매번호 업로드 모달 열기
 const open1688UploadModal = () => {
   if (!props.orderMstNo) {
     showError('오류', '발주번호가 없습니다.')
@@ -1515,24 +1515,26 @@ const open1688UploadModal = () => {
   is1688UploadModalOpen.value = true
 }
 
-// 1688 송장번호 업로드 모달 닫기
+// 1688 구매번호 업로드 모달 닫기
 const close1688UploadModal = () => {
   is1688UploadModalOpen.value = false
+  // 데이터 새로고침
+  loadTabData()
 }
 
-// 1688 송장번호 업로드 처리
-const handle1688TrackingNumberUpload = async (file) => {
+// 1688 구매번호 업로드 처리
+const handle1688OrderNumberUpload = async (file) => {
   if (!props.orderMstNo) {
     throw new Error('발주번호가 없습니다.')
   }
   
-  const result = await upload1688TrackingNumber(props.orderMstNo, file)
-  return result
+  const response = await upload1688OrderNumber(props.orderMstNo, file)
+  return response
 }
 
-// 1688 송장번호 업로드 성공 처리
+// 1688 구매번호 업로드 성공 처리
 const handle1688UploadSuccess = () => {
-  showSuccess('업로드 완료', '1688 송장번호가 성공적으로 업로드되었습니다.')
+  showSuccess('업로드 완료', '1688 구매번호가 성공적으로 업로드되었습니다.')
   // 데이터 새로고침
   loadTabData()
 }
