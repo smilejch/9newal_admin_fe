@@ -719,7 +719,7 @@ const colDefs = computed(() => {
       headerName: "상태", 
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-center',
-      minWidth: 100,
+      minWidth: 120,
       cellRenderer: (params) => {
         const status = params.value;
         const color = params.data.order_shipment_mst_status_color;
