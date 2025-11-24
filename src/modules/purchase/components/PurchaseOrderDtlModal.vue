@@ -623,6 +623,46 @@ const colDefs = computed(() => {
 
   const baseColDefs = []
   
+  // 전체센터 탭에 ACTIONS 컬럼 추가 (가장 앞에)
+  if (currentTabIndex.value === 0) {
+    baseColDefs.push({
+      field: "actions",
+      headerName: "Actions",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center flex items-center justify-center',
+      minWidth: 90,
+      maxWidth: 90,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const container = document.createElement('div')
+        container.className = 'flex items-center justify-center h-full w-full'
+        container.style.display = 'flex'
+        container.style.alignItems = 'center'
+        container.style.justifyContent = 'center'
+        
+        const button = document.createElement('button')
+        button.className = 'inline-flex items-center justify-center w-7 h-7 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors'
+        button.title = '센터 탭으로 이동'
+        button.innerHTML = `
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+          </svg>
+        `
+        button.addEventListener('click', (e) => {
+          e.stopPropagation() // row 클릭 이벤트 전파 방지
+          const shipmentMstNo = params.data?.order_shipment_mst_no
+          if (shipmentMstNo) {
+            navigateToCenterTab(shipmentMstNo)
+          }
+        })
+        
+        container.appendChild(button)
+        return container
+      }
+    })
+  }
+  
   // 구매 탭에서만 견적서 번호 컬럼을 가장 앞에 추가
   if (currentTabIndex.value === 2) {
     baseColDefs.push({
@@ -854,23 +894,11 @@ const onGridReady = (params) => {
   agGrid.value = params.api
 }
 
-// 행 클릭 이벤트 핸들러 (전체센터 탭에서만 동작)
-const onRowClicked = async (params) => {
-  // 전체센터 탭이 아니면 동작하지 않음
-  if (currentTabIndex.value !== 0) return
-  
-  // 견적 탭과 구매 탭에서는 클릭 동작 없음
-  if (currentTabIndex.value === 1 || currentTabIndex.value === 2) return
-  
-  // 클릭된 row의 센터 정보 확인
-  const clickedRow = params.data
-  if (!clickedRow) return
-  
-  // order_shipment_mst_no로 해당 센터 탭 찾기
-  const shipmentMstNo = clickedRow.order_shipment_mst_no
+// 센터 탭으로 이동하는 함수 (재사용 가능)
+const navigateToCenterTab = async (shipmentMstNo) => {
   if (!shipmentMstNo) return
   
-  // tabs 배열에서 해당 센터 탭의 인덱스 찾기 (구매 탭이 추가되어 인덱스 +1)
+  // tabs 배열에서 해당 센터 탭의 인덱스 찾기
   const targetTabIndex = tabs.value.findIndex(tab => tab.order_shipment_mst_no === shipmentMstNo)
   
   // 탭을 찾았으면 해당 탭으로 이동
@@ -887,6 +915,15 @@ const onRowClicked = async (params) => {
     // 데이터 조회
     loadTabData()
   }
+}
+
+// 행 클릭 이벤트 핸들러 (전체센터 탭에서는 비활성화)
+const onRowClicked = async (params) => {
+  // 전체센터 탭에서는 row 클릭 비활성화 (버튼으로만 이동)
+  if (currentTabIndex.value === 0) return
+  
+  // 견적 탭과 구매 탭에서는 클릭 동작 없음
+  if (currentTabIndex.value === 1 || currentTabIndex.value === 2) return
 }
 
 // 선택 변경 이벤트 핸들러 (구매 탭에서만 동작)
@@ -1186,10 +1223,7 @@ const scrollToTab = (tabIndex) => {
 const getRowStyle = (params) => {
   const style = {}
   
-  // 전체센터 탭인 경우 cursor pointer 적용
-  if (currentTabIndex.value === 0) {
-    style.cursor = 'pointer'
-  }
+  // 전체센터 탭에서는 row 클릭 비활성화로 cursor pointer 제거
   
   // fail_yn이 1인 경우 연한 빨간색 배경 (우선순위 높음)
   if (params.data?.fail_yn === 1) {
