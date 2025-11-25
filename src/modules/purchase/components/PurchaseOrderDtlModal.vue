@@ -715,14 +715,14 @@ const colDefs = computed(() => {
   // 전체센터 탭과 구매 탭에서만 확정상태 컬럼 표시
   if (currentTabIndex.value === 0 || currentTabIndex.value === 2) {
     baseColDefs.push({
-      field: "order_shipment_mst_status_name", 
+      field: "order_shipment_dtl_status_name", 
       headerName: "상태", 
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-center',
       minWidth: 120,
       cellRenderer: (params) => {
         const status = params.value;
-        const color = params.data.order_shipment_mst_status_color;
+        const color = params.data.order_shipment_dtl_status_color;
         if (!status) return '';
         return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${color}-100 text-${color}-800">${status}</span>`;
       }
