@@ -299,20 +299,26 @@ const loadEstimateData = async () => {
       
       // 포장 견적은 제품 정보에 포함되므로 별도 배열은 비움
       packagingEstimate.value = []
-    }
-    
-    // 회사 정보 설정
-    try {
-      const companyData = await fetchCompanyProfile()
-      if (companyData) {
-        companyInfo.value = companyData
-      } else {
+
+      console.log("--------------------------------")
+      console.log(estimateInfo)
+      console.log(estimateInfo.company_no)
+      console.log("--------------------------------")
+
+      // 회사 정보 설정
+      try {
+        const companyData = await fetchCompanyProfile(estimateInfo.company_no)
+        if (companyData) {
+          companyInfo.value = companyData
+        } else {
+          companyInfo.value = {}
+        }
+      } catch (error) {
+        console.error('회사 정보 로드 실패:', error)
         companyInfo.value = {}
       }
-    } catch (error) {
-      console.error('회사 정보 로드 실패:', error)
-      companyInfo.value = {}
     }
+    
     
     isEstimateLoaded.value = true
     

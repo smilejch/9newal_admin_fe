@@ -38,8 +38,8 @@ export async function updateCompanyProfile(profile) {
 }
 
 // 회사 프로필 조회
-export async function fetchCompanyProfile() {
-  const response = await instance.get('/common/company/profile');
+export async function fetchCompanyProfile(company_no) {
+  const response = await instance.get(`/common/company/${company_no}/profile`);
   return response.data;
 }
 

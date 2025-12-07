@@ -680,6 +680,32 @@ const colDefs = computed(() => {
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-center',
       minWidth: 150,
+      cellRenderer: (params) => {
+        const purchaseOrderNumber = params.value
+        const productLink = params.data?.['product_link_1688']
+        
+        if (!purchaseOrderNumber) {
+          return ''
+        }
+        
+        // purchase_order_number가 null이 아니고 product_link_1688 null이 아닐 경우 링크로 표시
+        if (productLink) {
+          return `
+            <a 
+              href="${productLink}" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="text-blue-600 hover:text-blue-800 hover:underline"
+              style="text-decoration: none;"
+            >
+              ${purchaseOrderNumber}
+            </a>
+          `
+        }
+        
+        // 링크가 없으면 텍스트로만 표시
+        return purchaseOrderNumber
+      }
     })
   }
   
@@ -709,6 +735,32 @@ const colDefs = computed(() => {
       headerClass: 'ag-header-cell-center',
       cellClass: 'text-center',
       minWidth: 150,
+      cellRenderer: (params) => {
+        const purchaseOrderNumber = params.value
+        const productLink = params.data?.['product_link_1688']
+        
+        if (!purchaseOrderNumber) {
+          return ''
+        }
+        
+        // purchase_order_number가 null이 아니고 product_link_1688 null이 아닐 경우 링크로 표시
+        if (productLink) {
+          return `
+            <a 
+              href="${productLink}" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="text-blue-600 hover:text-blue-800 hover:underline"
+              style="text-decoration: none;"
+            >
+              ${purchaseOrderNumber}
+            </a>
+          `
+        }
+        
+        // 링크가 없으면 텍스트로만 표시
+        return purchaseOrderNumber
+      }
     })
   }
 
