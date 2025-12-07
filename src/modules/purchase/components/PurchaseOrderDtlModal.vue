@@ -1419,7 +1419,7 @@ const handleExcelDownload = async () => {
     }
   } catch (error) {
     console.error('엑셀 다운로드 실패:', error)
-    showError('다운로드 실패', '엑셀 파일 다운로드 중 오류가 발생했습니다.')
+    showError('다운로드 실패', error.message)
   }
 }
 

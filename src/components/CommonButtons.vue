@@ -21,11 +21,9 @@
     <div v-if="dropdownButtons && dropdownButtons.length > 0" class="relative" ref="dropdownRef">
       <button
         @click="toggleDropdown"
-        class="px-2 py-1 rounded transition-colors cursor-pointer text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 flex items-center"
+        class="px-2 py-1 rounded transition-colors cursor-pointer text-xs bg-blue-500 text-white hover:bg-blue-600 flex items-center"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-        </svg>
+        <span class="material-icons" style="font-size: 24px">menu</span>
       </button>
 
       <!-- 드롭다운 메뉴 -->
