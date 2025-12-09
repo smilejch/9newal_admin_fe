@@ -705,7 +705,14 @@ const colDefs = computed(() => {
         
         // 링크가 없으면 텍스트로만 표시
         return purchaseOrderNumber
-      }
+      },
+    },
+    {
+      field: "purchase_pay_link",
+      headerName: "결제 링크",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center',
+      minWidth: 120,
     })
   }
   
@@ -761,6 +768,13 @@ const colDefs = computed(() => {
         // 링크가 없으면 텍스트로만 표시
         return purchaseOrderNumber
       }
+    },
+    {
+      field: "purchase_pay_link",
+      headerName: "결제 링크",
+      headerClass: 'ag-header-cell-center',
+      cellClass: 'text-center',
+      minWidth: 120,
     })
   }
 
@@ -1457,14 +1471,38 @@ const handlePurchaseSelectedItems = async () => {
     }
     
     // 선택 아이템 구매 API 호출
-    await create1688Order(orderShipmentDtlNos)
-    showSuccess('구매 완료', '선택한 항목이 성공적으로 구매되었습니다.')
+    const response = await create1688Order(orderShipmentDtlNos)
+    
+    // API 응답 처리
+    const apiMessage = response?.message || '구매 처리되었습니다.'
+    const errorDetails = response?.data?.error_details || []
+    
+    // error_details를 문자열 배열로 변환
+    const errorDetailsText = errorDetails.map((error, index) => {
+      const errorMsg = error.error || '알 수 없는 오류'
+      return errorMsg
+    })
+    
+    // error_count가 0이면 성공, 아니면 에러/경고
+    const errorCount = response?.data?.error_count || 0
+    const successCount = response?.data?.success_count || 0
+    
+    if (errorCount === 0 && successCount > 0) {
+      // 모두 성공
+      showSuccess('구매 완료', apiMessage, errorDetailsText.length > 0 ? errorDetailsText : undefined)
+    } else if (errorCount > 0 && successCount > 0) {
+      // 일부 성공
+      showWarning('구매 처리', apiMessage, errorDetailsText.length > 0 ? errorDetailsText : undefined)
+    } else {
+      // 모두 실패
+      showError('구매 실패', apiMessage, errorDetailsText.length > 0 ? errorDetailsText : undefined)
+    }
     
     // 데이터 새로고침
     loadTabData()
   } catch (error) {
     console.error('구매 실패:', error)
-    showError('구매 실패', '구매 처리 중 오류가 발생했습니다.')
+    showError('구매 실패', error.message)
   }
 }
 
