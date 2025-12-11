@@ -187,3 +187,13 @@ export async function create1688Order(orderShipmentDtlNos) {
   });
   return response.data;
 }
+
+/**
+ * 선택 아이템 결제링크 생성 - order_shipment_dtl_no 배열로 결제링크 생성
+ */
+export async function createPaymentLink(orderShipmentDtlNos) {
+  const response = await instance.post('/purchase/shipments/payment-link/create', {
+    order_shipment_dtl_nos: orderShipmentDtlNos
+  });
+  return response.data;
+}

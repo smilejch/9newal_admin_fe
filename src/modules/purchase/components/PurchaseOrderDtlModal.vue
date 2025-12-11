@@ -245,7 +245,7 @@ import PageDataGrid from '@/components/PageDataGrid.vue'
 import PagePagination from '@/components/PagePagination.vue'
 import CommonButtons from '@/components/CommonButtons.vue'
 import { showError, showSuccess, showInfo, showWarning, confirmAction } from '@/utils/alert'
-import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688OrderNumber, issueCjTrackingNumber, create1688Order } from '@/modules/purchase/api/purchase'
+import { fetchShipmentList, fetchShipmentDtl, fetchShipmentEstimateProduct, fetchPurchaseList, fetchEstimateProductsAll, fetchEstimateList, fetchEstimateDetail, downloadPurchaseListExcel, downloadEstimateListExcel, downloadEstimateProductsAllExcel, upload1688OrderNumber, issueCjTrackingNumber, create1688Order, createPaymentLink } from '@/modules/purchase/api/purchase'
 import EstimateModal from './EstimateModal.vue'
 import UploadModal from '@/components/UploadModal.vue'
 
@@ -1345,9 +1345,10 @@ const dropdownButtons = computed(() => {
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
   }
   
-  // 구매 탭: 선택 아이템 구매, CJ 운송장 발급, 1688 구매번호 업로드, 엑셀 다운로드
+  // 구매 탭: 선택 아이템 구매, 선택 아이템 결제링크 생성, CJ 운송장 발급, 1688 구매번호 업로드, 엑셀 다운로드
   if (currentTabIndex.value === 2) {
     dataManagementButtons.push({ label: '선택 아이템 구매', value: 'purchaseSelectedItems' })
+    dataManagementButtons.push({ label: '선택 아이템 결제링크 생성', value: 'createPaymentLink' })
     dataManagementButtons.push({ label: 'CJ 운송장 발급', value: 'issueCjTrackingNumber' })
     dataManagementButtons.push({ label: '1688 구매번호 업로드', value: 'upload1688OrderNumber' })
     dataManagementButtons.push({ label: '엑셀 다운로드', value: 'excelDownload' })
@@ -1388,6 +1389,12 @@ const handleDropdownClick = async (value) => {
       const purchaseConfirmed = await confirmAction('선택 아이템 구매', '선택한 항목을 구매하시겠습니까?', '구매', '취소')
       if (purchaseConfirmed) {
         handlePurchaseSelectedItems()
+      }
+      break
+    case 'createPaymentLink':
+      const paymentLinkConfirmed = await confirmAction('선택 아이템 결제링크 생성', '선택한 항목의 결제링크를 생성하시겠습니까?', '생성', '취소')
+      if (paymentLinkConfirmed) {
+        handleCreatePaymentLink()
       }
       break
     case 'issueCjTrackingNumber':
@@ -1503,6 +1510,75 @@ const handlePurchaseSelectedItems = async () => {
   } catch (error) {
     console.error('구매 실패:', error)
     showError('구매 실패', error.message)
+  }
+}
+
+// 선택 아이템 결제링크 생성
+const handleCreatePaymentLink = async () => {
+  try {
+    // 구매 탭에서만 동작
+    if (currentTabIndex.value !== 2) {
+      showError('탭 오류', '구매 탭에서만 사용할 수 있습니다.')
+      return
+    }
+    
+    const gridApi = agGrid.value
+    if (!gridApi) {
+      showError('그리드 오류', '데이터 그리드가 아직 준비되지 않았습니다.')
+      return
+    }
+    
+    const selectedRows = gridApi.getSelectedRows()
+    if (!selectedRows || selectedRows.length === 0) {
+      showInfo('선택 필요', '결제링크를 생성할 항목을 선택하세요.')
+      return
+    }
+    
+    // 선택된 row들에서 order_shipment_dtl_no 추출 (중복 제거)
+    const orderShipmentDtlNos = [...new Set(
+      selectedRows
+        .map(row => row.order_shipment_dtl_no)
+        .filter(no => no != null)
+    )]
+    
+    if (orderShipmentDtlNos.length === 0) {
+      showError('오류', '선택된 항목에 유효한 주문 상세번호가 없습니다.')
+      return
+    }
+    
+    // 선택 아이템 결제링크 생성 API 호출
+    const response = await createPaymentLink(orderShipmentDtlNos)
+    
+    // API 응답 처리
+    const apiMessage = response?.message || '결제링크 생성 처리되었습니다.'
+    const errorDetails = response?.data?.error_details || []
+    
+    // error_details를 문자열 배열로 변환
+    const errorDetailsText = errorDetails.map((error, index) => {
+      const errorMsg = error.error || '알 수 없는 오류'
+      return errorMsg
+    })
+    
+    // error_count가 0이면 성공, 아니면 에러/경고
+    const errorCount = response?.data?.error_count || 0
+    const successCount = response?.data?.success_count || 0
+    
+    if (errorCount === 0 && successCount > 0) {
+      // 모두 성공
+      showSuccess('결제링크 생성 완료', apiMessage, errorDetailsText.length > 0 ? errorDetailsText : undefined)
+    } else if (errorCount > 0 && successCount > 0) {
+      // 일부 성공
+      showWarning('결제링크 생성 처리', apiMessage, errorDetailsText.length > 0 ? errorDetailsText : undefined)
+    } else {
+      // 모두 실패
+      showError('결제링크 생성 실패', apiMessage, errorDetailsText.length > 0 ? errorDetailsText : undefined)
+    }
+    
+    // 데이터 새로고침
+    loadTabData()
+  } catch (error) {
+    console.error('결제링크 생성 실패:', error)
+    showError('결제링크 생성 실패', error.response.data.message)
   }
 }
 
