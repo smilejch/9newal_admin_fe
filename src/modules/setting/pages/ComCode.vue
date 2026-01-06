@@ -68,6 +68,7 @@
               :rowSelection="'single'"
               @grid-ready="onParentGridReady"
               @first-data-rendered="onParentFirstDataRendered"
+              @row-clicked="onParentRowClicked"
             >
             </ag-grid-vue>
           </template>
@@ -400,8 +401,8 @@ const parentColDefs = ref([
   {
     headerName: '액션',
     field: 'actions',
-    width: 120,
-    minWidth: 120,
+    width: 80,
+    minWidth: 80,
     sortable: false,
     filter: false,
     headerClass: 'ag-header-cell-center',
@@ -410,17 +411,6 @@ const parentColDefs = ref([
     cellRenderer: (params) => {
       const container = document.createElement('div')
       container.className = 'action-buttons flex space-x-1 justify-center'
-      
-      // 돋보기 아이콘 버튼 (자식 리스트 조회)
-      const searchBtn = document.createElement('button')
-      searchBtn.innerHTML = `
-        <span class="material-icons" style="font-size: 16px">search</span>
-      `
-      searchBtn.title = '값 조회'
-      searchBtn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        onParentRowClicked({ data: params.data })
-      })
       
       // 비고 수정 버튼
       const editDescBtn = document.createElement('button')
@@ -434,7 +424,6 @@ const parentColDefs = ref([
         openDescriptionModal(params.data)
       })
       
-      container.appendChild(searchBtn)
       container.appendChild(editDescBtn)
       
       return container
@@ -656,7 +645,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 카테고리 그리드 row hover 시 배경색 변경 (클릭 기능은 제거) */
+/* 카테고리 그리드 row hover 시 pointer 및 배경색 변경 */
+:deep(.parent-grid .ag-row) {
+  cursor: pointer;
+}
+
 :deep(.parent-grid .ag-row:hover) {
   background-color: #f3f4f6;
 }
