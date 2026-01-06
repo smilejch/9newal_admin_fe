@@ -11,30 +11,6 @@
     <template #content>
       <div class="com-code-form">
         <div class="form-grid">
-          <!-- 부모코드 (비활성화) -->
-          <div class="form-group-full-width">
-            <label class="form-label">부모코드</label>
-            <input
-              v-model="comCodeData.parent_com_code"
-              type="text"
-              class="form-input"
-              disabled
-              placeholder="부모코드"
-            />
-          </div>
-
-          <!-- 코드 (수정 모드에서만 표시, 비활성화) -->
-          <div v-if="modalMode === 'edit'" class="form-group-full-width">
-            <label class="form-label">코드</label>
-            <input
-              v-model="comCodeData.com_code"
-              type="text"
-              class="form-input"
-              disabled
-              placeholder="코드"
-            />
-          </div>
-
           <!-- 코드명 -->
           <div class="form-group-full-width">
             <label class="form-label">코드명 <span class="text-red-500">*</span></label>
@@ -71,7 +47,7 @@
           </div>
 
           <!-- 키워드1 -->
-          <div class="form-group">
+          <div class="form-group-full-width">
             <label class="form-label">키워드1</label>
             <input
               v-model="comCodeData.keyword1"
@@ -82,7 +58,7 @@
           </div>
 
           <!-- 키워드2 -->
-          <div class="form-group">
+          <div class="form-group-full-width">
             <label class="form-label">키워드2</label>
             <input
               v-model="comCodeData.keyword2"
@@ -93,7 +69,7 @@
           </div>
 
           <!-- 키워드3 -->
-          <div class="form-group">
+          <div class="form-group-full-width">
             <label class="form-label">키워드3</label>
             <input
               v-model="comCodeData.keyword3"
@@ -103,28 +79,15 @@
             />
           </div>
 
-          <!-- 생성일자 (비활성화) -->
-          <div class="form-group">
-            <label class="form-label">생성일자</label>
-            <input
-              v-model="comCodeData.created_at"
-              type="text"
+          <!-- 비고 -->
+          <div class="form-group-full-width">
+            <label class="form-label">비고</label>
+            <textarea
+              v-model="comCodeData.description"
+              rows="5"
               class="form-input"
-              disabled
-              placeholder="생성일자"
-            />
-          </div>
-
-          <!-- 수정일자 (비활성화) -->
-          <div class="form-group">
-            <label class="form-label">수정일자</label>
-            <input
-              v-model="comCodeData.updated_at"
-              type="text"
-              class="form-input"
-              disabled
-              placeholder="수정일자"
-            />
+              placeholder="비고를 입력하세요"
+            ></textarea>
           </div>
         </div>
       </div>
@@ -176,12 +139,11 @@ const comCodeData = reactive({
   keyword2: '',
   keyword3: '',
   use_yn: 1,
-  created_at: '',
-  updated_at: ''
+  description: ''
 })
 
 const modalTitle = computed(() => {
-  return '공통코드 수정'
+  return '기준값 수정'
 })
 
 // 부모코드와 코드가 같은지 확인 (부모 코드 자체인 경우)
@@ -209,29 +171,6 @@ const loadComCodeData = async () => {
         comCodeData[key] = comCode[key]
       }
     })
-    
-    // 날짜 포맷팅
-    if (comCode.created_at) {
-      const createdDate = new Date(comCode.created_at)
-      comCodeData.created_at = createdDate.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).replace(/\./g, '-').replace(/,/g, '')
-    }
-    
-    if (comCode.updated_at) {
-      const updatedDate = new Date(comCode.updated_at)
-      comCodeData.updated_at = updatedDate.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).replace(/\./g, '-').replace(/,/g, '')
-    }
   } catch (error) {
     console.error('공통코드 데이터 로드 실패:', error)
     showError('데이터 로드 실패', '공통코드 정보를 불러오는 중 오류가 발생했습니다.')
@@ -290,7 +229,8 @@ const handleSave = async () => {
       keyword1: comCodeData.keyword1 || '',
       keyword2: comCodeData.keyword2 || '',
       keyword3: comCodeData.keyword3 || '',
-      use_yn: comCodeData.use_yn
+      use_yn: comCodeData.use_yn,
+      description: comCodeData.description || ''
     }
 
     await updateComCode(props.parentComCode, props.comCode, saveData)
@@ -372,6 +312,11 @@ watch(() => props.mode, (newVal) => {
   background-color: #f3f4f6;
   color: #6b7280;
   cursor: not-allowed;
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 100px;
 }
 </style>
 
