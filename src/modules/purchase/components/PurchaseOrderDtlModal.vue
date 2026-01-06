@@ -100,6 +100,16 @@
                                 class="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full border-2 border-white"
                                 title="견적"
                             ></span>
+                            <!-- 밀크런 표시 (동적 센터 탭에서만, MILK_RUN일 때만) -->
+                            <span 
+                                v-if="index >= 3 && tab.logistics_type === 'MILK_RUN'"
+                                :class="[
+                                    'absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs font-bold',
+                                    selected ? 'text-white' : 'text-red-500'
+                                ]"
+                            >
+                                밀크런
+                            </span>
                             </button>
                             </div>
                         </Tab>
