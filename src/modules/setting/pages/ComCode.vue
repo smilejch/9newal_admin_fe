@@ -319,6 +319,14 @@ const createColumnDefs = (isParent = false) => {
       headerClass: 'ag-header-cell-center',
     },
     {
+      headerName: '키워드4',
+      field: 'keyword4',
+      width: 150,
+      minWidth: 100,
+      filter: false,
+      headerClass: 'ag-header-cell-center',
+    },
+    {
       headerName: '비고',
       field: 'description',
       width: 300,

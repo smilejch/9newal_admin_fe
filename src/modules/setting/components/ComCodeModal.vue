@@ -79,6 +79,17 @@
             />
           </div>
 
+          <!-- 키워드4 -->
+          <div class="form-group-full-width">
+            <label class="form-label">키워드4</label>
+            <input
+              v-model="comCodeData.keyword4"
+              type="text"
+              class="form-input"
+              placeholder="키워드4을 입력하세요"
+            />
+          </div>
+
           <!-- 비고 -->
           <div class="form-group-full-width">
             <label class="form-label">비고</label>
@@ -138,6 +149,7 @@ const comCodeData = reactive({
   keyword1: '',
   keyword2: '',
   keyword3: '',
+  keyword4: '',
   use_yn: 1,
   description: ''
 })
@@ -229,6 +241,7 @@ const handleSave = async () => {
       keyword1: comCodeData.keyword1 || '',
       keyword2: comCodeData.keyword2 || '',
       keyword3: comCodeData.keyword3 || '',
+      keyword4: comCodeData.keyword4 || '',
       use_yn: comCodeData.use_yn,
       description: comCodeData.description || ''
     }
